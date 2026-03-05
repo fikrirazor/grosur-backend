@@ -1,6 +1,8 @@
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import pino from "pino-http";
+import logger from "./utils/logger.util";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 
@@ -8,6 +10,9 @@ const app: Application = express();
 
 // Security middleware
 app.use(helmet());
+
+// Logging middleware
+app.use(pino({ logger }));
 
 // CORS configuration
 app.use(
@@ -20,14 +25,6 @@ app.use(
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Request logging middleware (development only)
-if (process.env.NODE_ENV === "development") {
-  app.use((req, _res, next) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
-  });
-}
 
 // API routes
 app.use("/api", routes);
