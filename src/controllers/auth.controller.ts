@@ -5,7 +5,7 @@ import { sendResponse } from "../utils/response.util";
 export const signUp = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const result = await registerUser(req.body);
@@ -18,7 +18,7 @@ export const signUp = async (
 export const signIn = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const result = await loginUser(req.body);
@@ -27,4 +27,3 @@ export const signIn = async (
     next(error);
   }
 };
-

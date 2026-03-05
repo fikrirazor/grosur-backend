@@ -4,9 +4,16 @@ import config from "../config/env";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
 
-interface JwtPayload { userId: string; email: string; }
+interface JwtPayload {
+  userId: string;
+  email: string;
+}
 
-export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const token = extractToken(req);
     if (!token) return sendResponse(res, 401, false, "No token provided.");
@@ -20,12 +27,16 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-const extractToken = (req: Request) => req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.substring(7) : null;
+const extractToken = (req: Request) =>
+  req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.substring(7)
+    : null;
 
-const fetchAuthUser = async (id: string) => prisma.user.findUnique({
-  where: { id },
-  select: { id: true, name: true, email: true, role: true, isVerified: true },
-});
+const fetchAuthUser = async (id: string) =>
+  prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, role: true, isVerified: true },
+  });
 
 const handleAuthError = (res: Response, error: any) => {
   const expired = error instanceof jwt.TokenExpiredError;
@@ -42,4 +53,3 @@ export const authorizeRoles = (...roles: string[]) => {
     next();
   };
 };
-

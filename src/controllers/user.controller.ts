@@ -5,7 +5,7 @@ import { sendResponse } from "../utils/response.util";
 export const getProfile = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;

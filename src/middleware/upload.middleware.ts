@@ -8,7 +8,10 @@ const fileFilter = (_req: any, file: any, cb: any) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new AppError(400, "Only .jpg, .jpeg and .png formats are allowed!"), false);
+    cb(
+      new AppError(400, "Only .jpg, .jpeg and .png formats are allowed!"),
+      false,
+    );
   }
 };
 

@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { signUp, signIn } from '../controllers/auth.controller';
-import { validateRequest } from '../middleware/validation.middleware';
-import { signUpSchema, signInSchema } from '../validations/auth.validation';
+import { Router } from "express";
+import { signUp, signIn } from "../controllers/auth.controller";
+import { validateRequest } from "../middleware/validation.middleware";
+import { signUpSchema, signInSchema } from "../validations/auth.validation";
 
 const router = Router();
 
@@ -10,14 +10,13 @@ const router = Router();
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/signup', validateRequest(signUpSchema), signUp);
+router.post("/signup", validateRequest(signUpSchema), signUp);
 
 /**
  * @route   POST /api/auth/signin
  * @desc    Sign in a user
  * @access  Public
  */
-router.post('/signin', validateRequest(signInSchema), signIn);
+router.post("/signin", validateRequest(signInSchema), signIn);
 
 export default router;
-

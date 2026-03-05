@@ -6,14 +6,13 @@ interface PaginationInfo {
   totalRows: number;
 }
 
-
 export const sendResponse = <T>(
   res: Response,
   statusCode: number,
   success: boolean,
   message: string,
   data?: T,
-  pagination?: PaginationInfo
+  pagination?: PaginationInfo,
 ): void => {
   res.status(statusCode).json({
     success,

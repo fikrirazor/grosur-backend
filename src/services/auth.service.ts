@@ -48,6 +48,6 @@ const validateCredentials = async (email: string, pass: string) => {
 
 const formatAuthResponse = (user: any) => {
   const token = generateToken({ userId: user.id, email: user.email });
-  const { password, ...userWithoutPassword } = user; // Ensure password is excluded
+  const { password: _, ...userWithoutPassword } = user; // Ensure password is excluded
   return { user: userWithoutPassword, token };
 };
