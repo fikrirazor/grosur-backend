@@ -11,6 +11,10 @@ This is the backend for the Grosur application, built with Express.js, TypeScrip
 - **Validation**: Zod
 - **Authentication**: JWT (JSON Web Token)
 - **Security**: Helmet, CORS
+- **Logging**: Pino
+- **Testing**: Jest
+- **Linting**: ESLint
+- **Formatting**: Prettier
 
 ## 📁 Directory Structure
 
