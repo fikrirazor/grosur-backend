@@ -1,5 +1,6 @@
 // src/controllers/auth.controller.ts
 import { Request, Response } from "express";
+import { sendVerificationEmail, sendResetPasswordEmail } from "../services/mailer.service";
 import {
   findUserByEmail,
   verifyPassword,
@@ -9,8 +10,10 @@ import {
   createVerifyToken,
   validateVerificationToken,
   verifyUserAndSetPassword,
+  createResetToken,
+  validateResetToken,
+  updatePasswordAndUseToken,
 } from "../services/auth.service";
-import { sendVerificationEmail } from "../services/mailer.service";
 
 export const loginHandler = async (req: Request, res: Response) => {
   try {
@@ -75,6 +78,39 @@ export const verifyHandler = async (req: Request, res: Response) => {
     await verifyUserAndSetPassword(user.id, dbToken.id, hashedPass);
 
     return res.status(200).json({ message: "Account verified successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const forgotPasswordHandler = async (req: Request, res: Response) => {
+  try {
+    const user = await findUserByEmail(req.body.email);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const token = generateRandomToken();
+    await createResetToken(user.id, token);
+    await sendResetPasswordEmail(user.email, token);
+
+    return res.status(200).json({ message: "Reset email sent" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const resetPasswordHandler = async (req: Request, res: Response) => {
+  try {
+    const { email, token, password } = req.body;
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const dbToken = await validateResetToken(user.id, token);
+    if (!dbToken) return res.status(400).json({ message: "Invalid token" });
+
+    const hashedPass = await bcrypt.hash(password, 10);
+    await updatePasswordAndUseToken(user.id, dbToken.id, hashedPass);
+
+    return res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }

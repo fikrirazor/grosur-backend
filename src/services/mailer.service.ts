@@ -19,3 +19,13 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     html: `<p>Click <a href="${url}">here</a> to verify your account.</p>`,
   });
 };
+
+export const sendResetPasswordEmail = async (email: string, token: string) => {
+  const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${email}`;
+  return await transporter.sendMail({
+    from: '"Online Grocery" <no-reply@grocery.com>',
+    to: email,
+    subject: "Reset your password",
+    html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
+  });
+};
