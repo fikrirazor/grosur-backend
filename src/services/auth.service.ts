@@ -33,3 +33,35 @@ export const createVerifyToken = async (userId: string, token: string) => {
     data: { userId, token: hashedToken, type: "EMAIL_VERIFY", expiresAt },
   });
 };
+
+// Add these to src/services/auth.service.ts
+
+export const validateVerificationToken = async (
+  userId: string,
+  rawToken: string,
+) => {
+  const dbToken = await prisma.verificationToken.findFirst({
+    where: { userId, type: "EMAIL_VERIFY", isUsed: false },
+  });
+  if (!dbToken || dbToken.expiresAt < new Date()) return null;
+
+  const isValid = await bcrypt.compare(rawToken, dbToken.token);
+  return isValid ? dbToken : null;
+};
+
+export const verifyUserAndSetPassword = async (
+  userId: string,
+  tokenId: string,
+  hashedPass: string,
+) => {
+  return await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPass, isVerified: true },
+    }),
+    prisma.verificationToken.update({
+      where: { id: tokenId },
+      data: { isUsed: true },
+    }),
+  ]);
+};
