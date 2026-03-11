@@ -4,7 +4,11 @@ import {
   findUserByEmail,
   verifyPassword,
   generateAuthToken,
+  createUnverifiedUser,
+  generateRandomToken,
+  createVerifyToken,
 } from "../services/auth.service";
+import { sendVerificationEmail } from "../services/mailer.service";
 
 export const loginHandler = async (req: Request, res: Response) => {
   try {
@@ -33,4 +37,25 @@ const sendTokenResponse = (res: Response, token: string, user: any) => {
     message: "Login successful",
     data: { id: user.id, email: user.email, role: user.role },
   });
+};
+
+export const registerHandler = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    let user = await findUserByEmail(email);
+
+    if (user && user.isVerified) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+    
+    if (!user) user = await createUnverifiedUser(email);
+
+    const token = generateRandomToken();
+    await createVerifyToken(user.id, token);
+    await sendVerificationEmail(email, token);
+
+    return res.status(200).json({ message: "Verification email sent" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
