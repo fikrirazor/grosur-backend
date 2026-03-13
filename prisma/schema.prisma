@@ -60,6 +60,8 @@ enum VerificationTokenType {
 }
 
 // ============================================
+// FEATURE 1 (ANDREAS)
+// ============================================
 // USER & AUTH
 // ============================================
 
@@ -130,6 +132,8 @@ model Address {
   orders Order[]
 }
 
+// ============================================
+// FEATURE 2 (FIKRI)
 // ============================================
 // STORE & LOCATION
 // ============================================
@@ -247,6 +251,8 @@ model StockJournal {
   @@index([type])
 }
 
+// ============================================
+// FEATURE 3 (ENDANG)
 // ============================================
 // DISCOUNT & VOUCHER
 // ============================================
@@ -409,21 +415,3 @@ model CronJobLog {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 }
-
-// ============================================
-// INDEXES FOR PERFORMANCE
-// ============================================
-
-// User indexes
-
-// Order indexes
-
-// Product indexes
-
-// Stock indexes
-
-// StockJournal indexes
-
-// Voucher indexes
-
-// Cart indexes

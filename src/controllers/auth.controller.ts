@@ -1,5 +1,6 @@
 // src/controllers/auth.controller.ts
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 import { sendVerificationEmail, sendResetPasswordEmail } from "../services/mailer.service";
 import {
   findUserByEmail,
