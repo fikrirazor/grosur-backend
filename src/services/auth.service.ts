@@ -1,7 +1,7 @@
 // src/services/auth.service.ts
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import prisma from "../generated/prisma";
+import prisma from "../config/database";
 import crypto from "crypto";
 
 export const findUserByEmail = async (email: string) => {
