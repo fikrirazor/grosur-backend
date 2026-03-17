@@ -4,7 +4,7 @@ import helmet from "helmet";
 import pino from "pino-http";
 import logger from "./utils/logger.util";
 import routes from "./routes";
-import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 
 const app: Application = express();
 
