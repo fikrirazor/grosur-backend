@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { verifyToken, requireRole } from "../middlewares/auth.middleware";
 import { Role } from "@prisma/client";
-
+import { getAssignedStore } from "../controllers/store.controller";
 const router = Router();
 
 // Sequence: 1. Is there a token? -> 2. Is the role correct? -> 3. Execute logic
@@ -23,5 +23,7 @@ router.patch(
         res.send("Stock updated!");
     }
 );
+
+router.get("/my-store", verifyToken, getAssignedStore);
 
 export default router;
