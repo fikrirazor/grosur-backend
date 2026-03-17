@@ -53,8 +53,8 @@ export const registerHandler = async (req: Request, res: Response) => {
     if (user && user.isVerified) {
       return res.status(400).json({ message: "Email already registered" });
     }
-    
-    if (!user) user = await createUnverifiedUser(email);
+
+    if (!user) user = await createUnverifiedUser(email, referredBy);
 
     const token = generateRandomToken();
     await createVerifyToken(user.id, token);

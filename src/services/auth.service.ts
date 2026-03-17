@@ -18,8 +18,16 @@ export const generateAuthToken = (userId: string, role: string) => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, { expiresIn: "1d" });
 };
 
-export const createUnverifiedUser = async (email: string) => {
-  return await prisma.user.create({ data: { email, isVerified: false } });
+export const createUnverifiedUser = async (email: string, referredBy?: string) => {
+  return await prisma.user.create({
+    data: {
+      email,
+      isVerified: false,
+      role: "USER", // Explicitly set to ensure no one registers as ADMIN
+      referredBy: referredBy || null,
+      // referralCode is @default(uuid()), so Prisma handles that automatically!
+    }
+  });
 };
 
 export const generateRandomToken = () => {
