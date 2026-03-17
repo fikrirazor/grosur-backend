@@ -47,7 +47,7 @@ const sendTokenResponse = (res: Response, token: string, user: any) => {
 
 export const registerHandler = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { email, referredBy } = req.body;
     let user = await findUserByEmail(email);
 
     if (user && user.isVerified) {
