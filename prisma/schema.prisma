@@ -118,8 +118,7 @@ model Address {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   phone      String
-  province   String
-  city       String
+  
   district   String
   detail     String
   postalCode String?
@@ -128,6 +127,14 @@ model Address {
   longitude  Float?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  // Keep these for display purposes (e.g., "DI Yogyakarta", "Bantul")
+  province   String
+  city       String
+
+  // ADD THESE for RajaOngkir API calls (e.g., "5", "39")
+  provinceId String?  
+  cityId     String?
 
   orders Order[]
 }
