@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
-import prisma from "../utils/prisma";
-import { fetchRajaOngkirCost } from "../services/shipping.service";
+import prisma from "../config/database";
+import {
+    fetchRajaOngkirCost,
+    fetchProvinces,
+    fetchCities,
+} from "../services/shipping.service";
 
 export const getShippingCosts = async (req: Request, res: Response) => {
     try {
@@ -19,34 +23,21 @@ export const getShippingCosts = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "User default address not found" });
         }
 
-        const store = await prisma.store.findUnique({
-            where: { id: storeId }
-        });
+        const store = await prisma.store.findUnique({ where: { id: storeId } });
+        if (!store) return res.status(404).json({ message: "Store not found" });
 
-        if (!store) {
-            return res.status(404).json({ message: "Store not found" });
-        }
+        const destinationString = `${(userAddress as any).cityId}`;
 
-        const destinationString = `${(userAddress as any).cityId}`; // Identifier for your cache
-
-        // 1. Check Database Cache First
+        // 1. Check cache first
         const cachedCosts = await prisma.shippingCost.findMany({
-            where: {
-                storeId,
-                destination: destinationString,
-                courier: courier.toUpperCase(),
-            },
+            where: { storeId, destination: destinationString, courier: courier.toUpperCase() },
         });
 
-        // If we have cached results, return them immediately to save API calls!
         if (cachedCosts.length > 0) {
-            return res.status(200).json({
-                message: "Retrieved from cache",
-                data: cachedCosts
-            });
+            return res.status(200).json({ message: "Retrieved from cache", data: cachedCosts });
         }
 
-        // 2. Not in cache? Fetch from RajaOngkir
+        // 2. Fetch from RajaOngkir
         const apiResults = await fetchRajaOngkirCost(
             (store as any).cityId,
             (userAddress as any).cityId,
@@ -54,52 +45,44 @@ export const getShippingCosts = async (req: Request, res: Response) => {
             courier
         );
 
-        // 3. Format and Save to Database Cache
+        // 3. Format, cache, and return
         const formattedCosts = apiResults.map((service: any) => ({
             storeId,
             destination: destinationString,
-            province: "Mapping Needed", // You can pull this from the RajaOngkir response
-            city: "Mapping Needed",
-            district: "Mapping Needed",
+            province: "N/A",
+            city: "N/A",
+            district: "N/A",
             courier: courier.toUpperCase(),
             service: service.service,
             cost: service.cost[0].value,
-            estimatedDays: parseInt(service.cost[0].etd.replace(/\D/g, "")) || null, // Extracts numbers from "1-2 HARI"
+            estimatedDays: parseInt(service.cost[0].etd.replace(/\D/g, "")) || null,
         }));
 
-        // Save all available service types (REG, YES, OKE) to the database
-        await prisma.shippingCost.createMany({
-            data: formattedCosts,
-            skipDuplicates: true,
-        });
+        await prisma.shippingCost.createMany({ data: formattedCosts, skipDuplicates: true });
 
-        return res.status(200).json({
-            message: "Fetched from courier and cached",
-            data: formattedCosts
-        });
-
-        // Add these to src/controllers/shipping.controller.ts
-
-        export const getProvinces = async (req: Request, res: Response) => {
-            try {
-                const provinces = await fetchProvinces();
-                return res.status(200).json({ data: provinces });
-            } catch (error: any) {
-                return res.status(500).json({ message: error.message });
-            }
-        };
-
-        export const getCities = async (req: Request, res: Response) => {
-            try {
-                const { provinceId } = req.query; // e.g., /api/shipping/cities?provinceId=5
-                const cities = await fetchCities(provinceId as string);
-                return res.status(200).json({ data: cities });
-            } catch (error: any) {
-                return res.status(500).json({ message: error.message });
-            }
-        };
-
+        return res.status(200).json({ message: "Fetched from courier and cached", data: formattedCosts });
     } catch (error: any) {
         return res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
+
+export const getProvinces = async (_req: Request, res: Response) => {
+    try {
+        const provinces = await fetchProvinces();
+        return res.status(200).json({ data: provinces });
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const getCities = async (req: Request, res: Response) => {
+    try {
+        const { provinceId } = req.query;
+        const cities = await fetchCities(provinceId as string);
+        return res.status(200).json({ data: cities });
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+

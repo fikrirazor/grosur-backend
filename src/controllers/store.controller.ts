@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "../utils/prisma";
+import prisma from "../config/database";
 import { findNearestStore } from "../services/location.service";
 
 export const getAssignedStore = async (req: Request, res: Response) => {
@@ -47,3 +47,25 @@ export const getAssignedStore = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+
+/** Public — no auth required.
+ *  Returns the first active store as a fallback when geolocation is denied
+ *  or the user does not yet have a default address.
+ */
+export const getFallbackStore = async (_req: Request, res: Response) => {
+    try {
+        const store = await prisma.store.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: "asc" },
+        });
+
+        if (!store) {
+            return res.status(404).json({ message: "No active stores found." });
+        }
+
+        return res.status(200).json({ message: "Fallback store returned", data: store });
+    } catch (error) {
+        console.error("GET_FALLBACK_STORE_ERROR:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
