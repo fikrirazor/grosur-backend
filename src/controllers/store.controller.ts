@@ -1,71 +1,62 @@
 import { Request, Response } from "express";
 import prisma from "../config/database";
 import { findNearestStore } from "../services/location.service";
+import jwt from "jsonwebtoken";
 
 export const getAssignedStore = async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.id;
+        const userId = getUserIdFromRequest(req);
+        if (!userId) return getFallbackStore(req, res); // Guest user? Give them fallback.
 
-        // 1. Get the user's default address
-        const defaultAddress = await prisma.address.findFirst({
+        const address = await prisma.address.findFirst({
             where: { userId, isDefault: true },
         });
 
-        if (!defaultAddress || !defaultAddress.latitude || !defaultAddress.longitude) {
-            return res.status(404).json({
-                message: "Default address not found. Please set an address first."
-            });
-        }
+        if (!address?.latitude) return res.status(404).json({ message: "Address not found" });
 
-        // 2. Use the Location Service to find the nearest store
-        const nearestStore = await findNearestStore(
-            defaultAddress.latitude,
-            defaultAddress.longitude
-        );
-
-        if (!nearestStore) {
-            return res.status(404).json({
-                message: "No stores available in your area yet."
-            });
-        }
-
-        // 3. Optional: Check if the store is within the allowed radius
-        // Most grocery apps limit delivery to ~15-20km
-        if (nearestStore.distance > nearestStore.maxRadius) {
-            return res.status(400).json({
-                message: "You are outside our current delivery range.",
-                distance: `${nearestStore.distance.toFixed(2)} km`
-            });
-        }
-
-        return res.status(200).json({
-            message: "Store assigned successfully",
-            data: nearestStore,
-        });
+        const nearest = await findNearestStore(address.latitude, address.longitude);
+        return validateAndSendStore(res, nearest);
     } catch (error) {
-        console.error("GET_STORE_ERROR:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
 
-/** Public — no auth required.
- *  Returns the first active store as a fallback when geolocation is denied
- *  or the user does not yet have a default address.
- */
 export const getFallbackStore = async (_req: Request, res: Response) => {
     try {
         const store = await prisma.store.findFirst({
             where: { isActive: true },
             orderBy: { createdAt: "asc" },
         });
-
-        if (!store) {
-            return res.status(404).json({ message: "No active stores found." });
-        }
-
-        return res.status(200).json({ message: "Fallback store returned", data: store });
+        return store
+            ? res.status(200).json({ message: "Fallback", data: store })
+            : res.status(404).json({ message: "No active stores" });
     } catch (error) {
-        console.error("GET_FALLBACK_STORE_ERROR:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
-};
+};
+
+/* --- CLEAN CODE HELPERS (< 15 Lines) --- */
+
+const getUserIdFromRequest = (req: Request): string | null => {
+    const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    if (!token) return null;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        return decoded.id;
+    } catch {
+        return null;
+    }
+};
+
+const validateAndSendStore = (res: Response, store: any) => {
+    if (!store) return res.status(404).json({ message: "No stores in area" });
+
+    if (store.distance > store.maxRadius) {
+        return res.status(400).json({
+            message: "Outside delivery range",
+            distance: `${store.distance.toFixed(2)} km`
+        });
+    }
+
+    return res.status(200).json({ data: store });
+};

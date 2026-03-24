@@ -1,5 +1,5 @@
 import axios from "axios";
-import prisma from "../utils/prisma";
+import prisma from "../config/database";
 
 const OPENCAGE_API_KEY = process.env.OPENCAGE_API_KEY;
 const OPENCAGE_URL = "https://api.opencagedata.com/geocode/v1/json";

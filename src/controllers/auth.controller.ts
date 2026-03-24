@@ -150,7 +150,7 @@ export const googleLogin = async (req: Request, res: Response) => {
         data: {
           email,
           name: name || "Google User",
-          isVerified: true, 
+          isVerified: true,
           role: "USER",
           // You might want to add a 'profilePicture' field to your Prisma schema later to save 'picture'
         },
