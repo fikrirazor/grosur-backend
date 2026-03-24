@@ -1,14 +1,16 @@
 import { Router } from "express";
-import { getProfile } from "../controllers/user.controller";
+import { updateProfile } from "../controllers/user.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
+import { upload } from "../middlewares/upload.middleware";
 
 const router = Router();
 
-/**
- * @route   GET /api/user/profile
- * @desc    Get current user profile
- * @access  Private
- */
-router.get("/profile", verifyToken, getProfile);
+// PATCH is best practice for partial updates
+router.patch(
+    "/profile",
+    verifyToken,
+    upload.single("profilePhoto"), // Must match the frontend form field name
+    updateProfile
+);
 
 export default router;
