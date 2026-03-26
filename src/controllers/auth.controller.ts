@@ -27,8 +27,25 @@ export const loginHandler = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const user = await findUserByEmail(email);
 
-    if (!user || !user.password || !(await verifyPassword(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    // 1. Check if user exists
+    if (!user) {
+      return res.status(401).json({ message: "Email tidak ditemukan" });
+    }
+
+    // 2. Check if they registered via Google but are trying to use a password
+    if (!user.password) {
+      return res.status(401).json({ message: "Silakan gunakan login dengan Google" });
+    }
+
+    // 3. Verify the password
+    const isMatch = await verifyPassword(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Password salah" });
+    }
+
+    // 4. CRITICAL: Check if they have verified their email
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Mohon verifikasi email Anda terlebih dahulu" });
     }
 
     const token = generateAuthToken(user.id, user.role);
