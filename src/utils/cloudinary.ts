@@ -1,16 +1,14 @@
 import { v2 as cloudinary } from "cloudinary";
-import streamifier from "streamifier"; // Optional: npm install streamifier
+import config from "../config/env";
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET,
+    cloudinary_url: config.cloudinary.url,
 });
 
-export const uploadToCloudinary = (fileBuffer: Buffer): Promise<any> => {
+export const uploadToCloudinary = (fileBuffer: Buffer, folder: string = "profile_photos"): Promise<any> => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "payment_proofs" },
+            { folder },
             (error, result) => {
                 if (error) return reject(error);
                 resolve(result);

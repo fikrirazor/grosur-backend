@@ -1,4 +1,3 @@
-// src/middlewares/auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Role } from "@prisma/client";
@@ -8,15 +7,17 @@ export const verifyToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  const token = req.cookies?.token;
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  // CRITICAL FIX: Check cookies FIRST, and if empty, fallback to the Authorization header
+  const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "Unauthorized: Token missing" });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     req.user = decoded as { id: string; role: Role };
     return next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
 

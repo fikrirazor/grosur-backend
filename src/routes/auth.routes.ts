@@ -7,6 +7,7 @@ import {
     forgotPasswordHandler,
     resetPasswordHandler,
     googleLogin,
+    logoutHandler,
 } from "../controllers/auth.controller";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.post("/verify", verifyHandler);
 router.post("/forgot-password", forgotPasswordHandler);
 router.post("/reset-password", resetPasswordHandler);
 router.post("/google", googleLogin);
+router.post("/logout", logoutHandler);
 
 export default router;

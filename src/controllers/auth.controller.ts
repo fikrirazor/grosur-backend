@@ -64,7 +64,13 @@ const sendTokenResponse = (res: Response, token: string, user: any) => {
 
   return res.status(200).json({
     message: "Login successful",
-    data: { id: user.id, email: user.email, role: user.role },
+    data: { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role,
+      name: user.name,
+      profilePicture: user.photo
+    },
   });
 };
 
@@ -140,6 +146,14 @@ export const resetPasswordHandler = async (req: Request, res: Response) => {
   }
 };
 
+export const logoutHandler = async (_req: Request, res: Response) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  });
+  return res.status(200).json({ message: "Logout successful" });
+};
+
 export const googleLogin = async (req: Request, res: Response) => {
   try {
     const { credential } = req.body; // The token sent from the Next.js frontend
@@ -185,7 +199,13 @@ export const googleLogin = async (req: Request, res: Response) => {
       message: "Login successful",
       data: {
         token,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name, 
+          role: user.role,
+          profilePicture: user.photo
+        },
       },
     });
   } catch (error) {

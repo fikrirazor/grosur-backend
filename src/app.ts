@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import pino from "pino-http";
 import logger from "./utils/logger.util";
 import routes from "./routes";
@@ -10,6 +11,7 @@ const app: Application = express();
 
 // Security middleware
 app.use(helmet());
+app.use(cookieParser());
 
 // Logging middleware
 app.use(pino({ logger }));

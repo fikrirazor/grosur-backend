@@ -17,7 +17,7 @@ router.get("/health", (_req, res) => {
 
 // API routes
 router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
+router.use("/users", userRoutes);
 router.use("/address", addressRoutes);
 router.use("/store", storeRoutes);
 
