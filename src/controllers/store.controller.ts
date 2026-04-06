@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../config/database";
 import { findNearestStore } from "../services/location.service";
 import jwt from "jsonwebtoken";
+import { calculateDistance } from "../utils/haversine";
 
 export const getAssignedStore = async (req: Request, res: Response) => {
     try {
@@ -11,8 +12,9 @@ export const getAssignedStore = async (req: Request, res: Response) => {
         const address = await prisma.address.findFirst({
             where: { userId, isDefault: true },
         });
-
-        if (!address?.latitude) return res.status(404).json({ message: "Address not found" });
+        if (!address || address.latitude === null || address.longitude === null) {
+            return res.status(404).json({ message: "Address not found or location not set" });
+        }
 
         const nearest = await findNearestStore(address.latitude, address.longitude);
         return validateAndSendStore(res, nearest);
@@ -35,7 +37,40 @@ export const getFallbackStore = async (_req: Request, res: Response) => {
     }
 };
 
+export const getNearestStore = async (req: Request, res: Response) => {
+    try {
+        const latitude = parseFloat(req.body.latitude);
+        const longitude = parseFloat(req.body.longitude);
+
+        if (isNaN(latitude) || isNaN(longitude)) {
+            return res.status(400).json({ message: "Lokasi tidak valid atau diperlukan" });
+        }
+
+        const stores = await prisma.store.findMany();
+        if (!stores.length) return res.status(404).json({ message: "Toko tidak ditemukan" });
+
+        const nearestStore = findClosestStore(latitude, longitude, stores);
+        const distanceKm = calculateDistance(latitude, longitude, nearestStore.latitude, nearestStore.longitude);
+
+        return res.status(200).json({
+            message: "Toko terdekat ditemukan",
+            data: nearestStore,
+            distanceKm: parseFloat(distanceKm.toFixed(2))
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 /* --- CLEAN CODE HELPERS (< 15 Lines) --- */
+
+const findClosestStore = (lat: number, lng: number, stores: any[]) => {
+    return stores.reduce((closest, store) => {
+        const closestDist = calculateDistance(lat, lng, closest.latitude, closest.longitude);
+        const storeDist = calculateDistance(lat, lng, store.latitude, store.longitude);
+        return storeDist < closestDist ? store : closest;
+    });
+};
 
 const getUserIdFromRequest = (req: Request): string | null => {
     const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
