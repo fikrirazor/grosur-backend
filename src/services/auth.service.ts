@@ -33,21 +33,25 @@ const checkUserExists = async (email: string) => {
 const createUserAccount = async (name: string, email: string, pass: string) => {
   const hashedPassword = await hashPassword(pass);
   return await prisma.user.create({
-    data: { name, email, password: hashedPassword, role: "CUSTOMER" },
+    data: { name, email, password: hashedPassword, role: "USER" },
     select: USER_SELECT,
   });
 };
 
 const validateCredentials = async (email: string, pass: string) => {
   const user = await checkUserExists(email);
-  if (!user || !(await comparePassword(pass, user.password))) {
+  if (!user || !user.password || !(await comparePassword(pass, user.password))) {
     throw new AppError(401, "Invalid email or password");
   }
   return user;
 };
 
 const formatAuthResponse = (user: any) => {
-  const token = generateToken({ userId: user.id, email: user.email });
+  const token = generateToken({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  });
   const { password: _, ...userWithoutPassword } = user; // Ensure password is excluded
   return { user: userWithoutPassword, token };
 };

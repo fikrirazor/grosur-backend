@@ -2,11 +2,14 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import pino from "pino-http";
+import cookieParser from "cookie-parser";
 import logger from "./utils/logger.util";
+import { config } from "./config/env";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 
 const app: Application = express();
+app.use(cookieParser());
 
 // Security middleware
 app.use(helmet());
@@ -17,7 +20,7 @@ app.use(pino({ logger }));
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: config.corsOrigin,
     credentials: true,
   }),
 );

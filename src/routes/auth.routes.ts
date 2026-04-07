@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { signUp, signIn } from "../controllers/auth.controller";
+import { signUp, signIn, getMe, logout } from "../controllers/auth.controller";
 import { validateRequest } from "../middleware/validation.middleware";
 import { signUpSchema, signInSchema } from "../validations/auth.validation";
+import { verifyToken } from "../middleware/auth.middleware";
 
 const router = Router();
 
@@ -18,5 +19,19 @@ router.post("/signup", validateRequest(signUpSchema), signUp);
  * @access  Public
  */
 router.post("/signin", validateRequest(signInSchema), signIn);
+
+/**
+ * @route   GET /api/auth/me
+ * @desc    Get current user profile
+ * @access  Private
+ */
+router.get("/me", verifyToken, getMe);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout user and clear cookies
+ * @access  Public
+ */
+router.post("/logout", logout);
 
 export default router;
