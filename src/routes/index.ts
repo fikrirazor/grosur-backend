@@ -3,6 +3,8 @@ import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 import storeAdminRoutes from "./store-admin.routes";
 import adminRoutes from "./admin.routes";
+import productRoutes from "./product.routes";
+import storeRoutes from "./store.routes";
 
 const router = Router();
 
@@ -20,5 +22,7 @@ router.use("/auth", authRoutes);
 router.use("/user", userRoutes);
 router.use("/admin", adminRoutes);
 router.use("/admin/store-admins", storeAdminRoutes);
+router.use("/products", productRoutes);
+router.use("/stores", storeRoutes);
 
 export default router;
