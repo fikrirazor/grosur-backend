@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { verifyToken } from "../middleware/auth.middleware";
-import { checkRole } from "../middleware/role.middleware";
+import { adminApiMiddleware } from "../middleware/role.middleware";
 
 const router = Router();
 
-router.use(verifyToken, checkRole(["SUPER_ADMIN", "STORE_ADMIN"]));
+router.use(verifyToken, adminApiMiddleware);
 
 router.get("/test", (req, res) => {
   return res.status(200).json({
