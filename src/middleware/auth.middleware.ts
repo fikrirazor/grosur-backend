@@ -16,10 +16,10 @@ export const verifyToken = async (
 ): Promise<void> => {
   try {
     const token = extractToken(req);
-    if (!token) return sendResponse(res, 401, false, "No token provided.");
+    if (!token) return sendResponse(res, 401, false, "No token provided.", undefined, undefined, "UNAUTHORIZED");
     const decoded = jwt.verify(token, config.jwt.secret) as JwtPayload;
     const user = await fetchAuthUser(decoded.userId);
-    if (!user) return sendResponse(res, 401, false, "User not found.");
+    if (!user) return sendResponse(res, 401, false, "User not found.", undefined, undefined, "UNAUTHORIZED");
     (req as any).user = user;
     next();
   } catch (error) {
@@ -28,9 +28,10 @@ export const verifyToken = async (
 };
 
 const extractToken = (req: Request) =>
-  req.headers.authorization?.startsWith("Bearer ")
+  req.cookies?.access_token ||
+  (req.headers.authorization?.startsWith("Bearer ")
     ? req.headers.authorization.substring(7)
-    : null;
+    : null);
 
 const fetchAuthUser = async (id: string) =>
   prisma.user.findUnique({
@@ -41,7 +42,8 @@ const fetchAuthUser = async (id: string) =>
 const handleAuthError = (res: Response, error: any) => {
   const expired = error instanceof jwt.TokenExpiredError;
   const message = expired ? "Token expired." : "Invalid token.";
-  sendResponse(res, 401, false, `${message} Authorization denied.`);
+  const code = expired ? "TOKEN_EXPIRED" : "INVALID_TOKEN";
+  sendResponse(res, 401, false, `${message} Authorization denied.`, undefined, undefined, code);
 };
 
 export const authorizeRoles = (...roles: string[]) => {
