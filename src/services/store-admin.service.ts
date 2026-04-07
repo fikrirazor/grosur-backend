@@ -118,3 +118,14 @@ export const deleteStoreAdmin = async (id: string) => {
 
   return prisma.user.delete({ where: { id } });
 };
+
+export const getStores = async () => {
+  return prisma.store.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: { name: "asc" },
+  });
+};
+

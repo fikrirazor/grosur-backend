@@ -31,4 +31,8 @@ router.patch(
 // Delete Store
 router.delete("/:id", storeAdminController.deleteStoreAdmin);
 
+// Get Stores (for dropdown)
+router.get("/list/all", storeAdminController.getStores);
+
 export default router;
+

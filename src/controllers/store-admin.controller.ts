@@ -58,3 +58,17 @@ export const deleteStoreAdmin = async (
     next(error);
   }
 };
+
+export const getStores = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const stores = await storeAdminService.getStores();
+    sendResponse(res, 200, true, "Stores retrieved successfully", stores);
+  } catch (error) {
+    next(error);
+  }
+};
+
