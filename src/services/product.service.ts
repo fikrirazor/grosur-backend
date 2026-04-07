@@ -79,6 +79,48 @@ export const getPublicProducts = async (query: ProductQuery) => {
   };
 };
 
+export const getPublicProductDetail = async (slug: string, storeId: string) => {
+  const stock = await prisma.stock.findFirst({
+    where: {
+      storeId,
+      product: {
+        slug,
+        isActive: true,
+      },
+    },
+    include: {
+      product: {
+        include: {
+          category: true,
+          images: true,
+        },
+      },
+    },
+  });
+
+  if (!stock) {
+    return null;
+  }
+
+  return {
+    id: stock.product.id,
+    name: stock.product.name,
+    slug: stock.product.slug,
+    description: stock.product.description,
+    price: stock.product.price,
+    category: stock.product.category.name,
+    categoryId: stock.product.categoryId,
+    images: stock.product.images.map((img) => ({
+      id: img.id,
+      url: img.url,
+    })),
+    inventory: {
+      quantity: stock.quantity,
+      storeId: stock.storeId,
+    },
+  };
+};
+
 export const getCategories = async () => {
   return await prisma.category.findMany({
     orderBy: {
