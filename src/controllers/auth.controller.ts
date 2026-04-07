@@ -24,7 +24,10 @@ export const signUp = async (
       maxAge: 3600000, // 1 hour
     });
 
-    sendResponse(res, 201, true, "User registered successfully", { user, token });
+    sendResponse(res, 201, true, "User registered successfully", {
+      user,
+      token,
+    });
   } catch (error) {
     next(error);
   }

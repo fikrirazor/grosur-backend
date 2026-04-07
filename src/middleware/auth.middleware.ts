@@ -16,10 +16,28 @@ export const verifyToken = async (
 ): Promise<void> => {
   try {
     const token = extractToken(req);
-    if (!token) return sendResponse(res, 401, false, "No token provided.", undefined, undefined, "UNAUTHORIZED");
+    if (!token)
+      return sendResponse(
+        res,
+        401,
+        false,
+        "No token provided.",
+        undefined,
+        undefined,
+        "UNAUTHORIZED",
+      );
     const decoded = jwt.verify(token, config.jwt.secret) as JwtPayload;
     const user = await fetchAuthUser(decoded.userId);
-    if (!user) return sendResponse(res, 401, false, "User not found.", undefined, undefined, "UNAUTHORIZED");
+    if (!user)
+      return sendResponse(
+        res,
+        401,
+        false,
+        "User not found.",
+        undefined,
+        undefined,
+        "UNAUTHORIZED",
+      );
     (req as any).user = user;
     next();
   } catch (error) {
@@ -43,7 +61,15 @@ const handleAuthError = (res: Response, error: any) => {
   const expired = error instanceof jwt.TokenExpiredError;
   const message = expired ? "Token expired." : "Invalid token.";
   const code = expired ? "TOKEN_EXPIRED" : "INVALID_TOKEN";
-  sendResponse(res, 401, false, `${message} Authorization denied.`, undefined, undefined, code);
+  sendResponse(
+    res,
+    401,
+    false,
+    `${message} Authorization denied.`,
+    undefined,
+    undefined,
+    code,
+  );
 };
 
 export const authorizeRoles = (...roles: string[]) => {
