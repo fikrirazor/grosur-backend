@@ -4,6 +4,26 @@ import { findNearestStore } from "../services/location.service";
 import jwt from "jsonwebtoken";
 import { calculateDistance } from "../utils/haversine";
 
+const MAX_RADIUS_KM = 50;
+
+// Helper 1: Calculate, Filter by 50km, and Sort (Clean Code: 6 lines)
+const getSortedNearbyStores = (lat: number, lng: number, stores: any[]) => {
+  return stores
+    .map(s => ({ ...s, distance: calculateDistance(lat, lng, s.latitude, s.longitude) }))
+    .filter(s => s.distance <= MAX_RADIUS_KM)
+    .sort((a, b) => a.distance - b.distance);
+};
+
+// Helper 2: Handle the Main Store Fallback (Clean Code: 5 lines)
+const handleFallback = (stores: any[]) => {
+  // @ts-ignore - Assuming your DB has an 'isMain' boolean, or we just grab the first store
+  const mainStore = stores.find(s => s.isMain) || stores[0];
+  return { 
+    store: mainStore, 
+    message: "Menggunakan toko utama (Lokasi ditolak atau di luar jangkauan 50km)" 
+  };
+};
+
 export const getAssignedStore = async (req: Request, res: Response) => {
     try {
         const userId = getUserIdFromRequest(req);
@@ -38,39 +58,30 @@ export const getFallbackStore = async (_req: Request, res: Response) => {
 };
 
 export const getNearestStore = async (req: Request, res: Response) => {
-    try {
-        const latitude = parseFloat(req.body.latitude);
-        const longitude = parseFloat(req.body.longitude);
+  try {
+    const { latitude, longitude } = req.body;
+    const stores = await prisma.store.findMany();
+    
+    if (!stores.length) return res.status(404).json({ message: "Data toko kosong" });
 
-        if (isNaN(latitude) || isNaN(longitude)) {
-            return res.status(400).json({ message: "Lokasi tidak valid atau diperlukan" });
-        }
+    // Fallback AC: Triggered if user denies location permission
+    if (!latitude || !longitude) return res.status(200).json(handleFallback(stores));
 
-        const stores = await prisma.store.findMany();
-        if (!stores.length) return res.status(404).json({ message: "Toko tidak ditemukan" });
+    // Calculate & Filter AC: Get stores within radius
+    const nearby = getSortedNearbyStores(latitude, longitude, stores);
+    
+    // Fallback AC: Triggered if user is too far from any store
+    if (!nearby.length) return res.status(200).json(handleFallback(stores));
 
-        const nearestStore = findClosestStore(latitude, longitude, stores);
-        const distanceKm = calculateDistance(latitude, longitude, nearestStore.latitude, nearestStore.longitude);
-
-        return res.status(200).json({
-            message: "Toko terdekat ditemukan",
-            data: nearestStore,
-            distanceKm: parseFloat(distanceKm.toFixed(2))
-        });
-    } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
-    }
+    // Return the absolute closest store as the primary target
+    return res.status(200).json({ store: nearby[0], message: "Toko terdekat ditemukan" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 /* --- CLEAN CODE HELPERS (< 15 Lines) --- */
 
-const findClosestStore = (lat: number, lng: number, stores: any[]) => {
-    return stores.reduce((closest, store) => {
-        const closestDist = calculateDistance(lat, lng, closest.latitude, closest.longitude);
-        const storeDist = calculateDistance(lat, lng, store.latitude, store.longitude);
-        return storeDist < closestDist ? store : closest;
-    });
-};
 
 const getUserIdFromRequest = (req: Request): string | null => {
     const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];

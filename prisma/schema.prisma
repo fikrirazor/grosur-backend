@@ -156,6 +156,7 @@ model Store {
   latitude    Float
   longitude   Float
   maxRadius   Float    @default(50) // km
+  isMain      Boolean  @default(false)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
