@@ -128,4 +128,3 @@ export const getStores = async () => {
     orderBy: { name: "asc" },
   });
 };
-

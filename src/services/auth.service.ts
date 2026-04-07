@@ -40,7 +40,11 @@ const createUserAccount = async (name: string, email: string, pass: string) => {
 
 const validateCredentials = async (email: string, pass: string) => {
   const user = await checkUserExists(email);
-  if (!user || !user.password || !(await comparePassword(pass, user.password))) {
+  if (
+    !user ||
+    !user.password ||
+    !(await comparePassword(pass, user.password))
+  ) {
     throw new AppError(401, "Invalid email or password");
   }
   return user;

@@ -11,5 +11,5 @@ export const updateStoreAdminSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
   managedStoreId: z.string().uuid().optional(),
-  isActive: z.boolean().optional(),
+  isVerified: z.boolean().optional(),
 });

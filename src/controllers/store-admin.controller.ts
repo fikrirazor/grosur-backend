@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as storeAdminService from "../services/store-admin.service";
 import { sendResponse } from "../utils/response.util";
+import { createAuditLog } from "../utils/audit.util";
 
 export const createStoreAdmin = async (
   req: Request,
@@ -9,6 +10,13 @@ export const createStoreAdmin = async (
 ) => {
   try {
     const admin = await storeAdminService.createStoreAdmin(req.body);
+    await createAuditLog(
+      "CREATE_STORE_ADMIN",
+      (req as any).user.id,
+      admin.id,
+      "User",
+      req.body,
+    );
     sendResponse(res, 201, true, "Store Admin created successfully", admin);
   } catch (error) {
     next(error);
@@ -40,6 +48,13 @@ export const updateStoreAdmin = async (
       req.params.id,
       req.body,
     );
+    await createAuditLog(
+      "UPDATE_STORE_ADMIN",
+      (req as any).user.id,
+      admin.id,
+      "User",
+      req.body,
+    );
     sendResponse(res, 200, true, "Store Admin updated successfully", admin);
   } catch (error) {
     next(error);
@@ -53,6 +68,12 @@ export const deleteStoreAdmin = async (
 ) => {
   try {
     await storeAdminService.deleteStoreAdmin(req.params.id);
+    await createAuditLog(
+      "DELETE_STORE_ADMIN",
+      (req as any).user.id,
+      req.params.id,
+      "User",
+    );
     sendResponse(res, 200, true, "Store Admin deleted successfully");
   } catch (error) {
     next(error);
@@ -71,4 +92,3 @@ export const getStores = async (
     next(error);
   }
 };
-

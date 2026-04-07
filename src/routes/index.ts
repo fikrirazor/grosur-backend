@@ -22,4 +22,3 @@ router.use("/admin", adminRoutes);
 router.use("/admin/store-admins", storeAdminRoutes);
 
 export default router;
-

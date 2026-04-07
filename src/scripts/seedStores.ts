@@ -28,7 +28,7 @@ async function seedStores() {
       district: "Mulyorejo",
       latitude: -7.2796,
       longitude: 112.7681,
-    }
+    },
   ];
 
   try {

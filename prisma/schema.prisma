@@ -88,6 +88,7 @@ model User {
   referrer           User?               @relation("ReferredUsers", fields: [referredBy], references: [id])
   verificationTokens VerificationToken[]
   cronJobLogs        CronJobLog[]
+  actionLogs         ActionLog[]
 
   managedStoreId String?
   managedStore   Store? @relation(fields: [managedStoreId], references: [id])
@@ -414,5 +415,24 @@ model CronJobLog {
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
+}
+
+// ============================================
+// AUDIT LOGGING
+// ============================================
+
+model ActionLog {
+  id         String   @id @default(uuid())
+  action     String // e.g., "CREATE_STORE_ADMIN", "UPDATE_STORE_ADMIN"
+  targetId   String? // The ID of the record being changed
+  targetType String? // e.g., "User", "Store"
+  details    Json? // Additional information about the action
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }
 

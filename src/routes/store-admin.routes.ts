@@ -11,28 +11,47 @@ const router = Router();
 
 router.use(verifyToken, authorizeRoles("SUPER_ADMIN"));
 
-// Create Store
+/**
+ * @route   POST /api/admin/store-admins
+ * @desc    Create a new store admin account
+ * @access  Private (SUPER_ADMIN)
+ */
 router.post(
   "/",
   validateRequest(createStoreAdminSchema),
   storeAdminController.createStoreAdmin,
 );
 
-// Get Store
+/**
+ * @route   GET /api/admin/store-admins
+ * @desc    Get all store admin accounts with pagination
+ * @access  Private (SUPER_ADMIN)
+ */
 router.get("/", storeAdminController.getStoreAdmins);
 
-// Update Store
+/**
+ * @route   PATCH /api/admin/store-admins/:id
+ * @desc    Update a store admin account
+ * @access  Private (SUPER_ADMIN)
+ */
 router.patch(
   "/:id",
   validateRequest(updateStoreAdminSchema),
   storeAdminController.updateStoreAdmin,
 );
 
-// Delete Store
+/**
+ * @route   DELETE /api/admin/store-admins/:id
+ * @desc    Delete a store admin account
+ * @access  Private (SUPER_ADMIN)
+ */
 router.delete("/:id", storeAdminController.deleteStoreAdmin);
 
-// Get Stores (for dropdown)
+/**
+ * @route   GET /api/admin/store-admins/list/all
+ * @desc    Get all stores (for dropdown/selection)
+ * @access  Private (SUPER_ADMIN)
+ */
 router.get("/list/all", storeAdminController.getStores);
 
 export default router;
-
