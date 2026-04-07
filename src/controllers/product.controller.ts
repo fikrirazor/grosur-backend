@@ -44,3 +44,33 @@ export const getCategories = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+
+export const getPublicProductDetail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params;
+    const { storeId } = req.query;
+
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        message: "storeId is required",
+      });
+    }
+
+    const product = await productService.getPublicProductDetail(slug, storeId as string);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or not available in this store",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
