@@ -28,7 +28,7 @@ export const adminApiMiddleware = (
 
   if (!isAllowed) {
     // Return 403 JSON response
-    return sendResponse(res, 403, false, "Forbidden: Required Admin Role");
+    return sendResponse(res, 403, false, "Forbidden: Required Admin Role", undefined, undefined, "FORBIDDEN");
   }
   next();
 };

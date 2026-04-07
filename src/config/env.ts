@@ -12,6 +12,7 @@ const envSchema = z.object({
   DIRECT_URL: z.string().min(1, "DIRECT_URL is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
+  CORS_ORIGIN: z.string().default("*"),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -35,6 +36,7 @@ export const config = {
     secret: env.JWT_SECRET,
     expiresIn: env.JWT_EXPIRES_IN,
   },
+  corsOrigin: env.CORS_ORIGIN,
 } as const;
 
 export default config;
