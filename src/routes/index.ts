@@ -5,6 +5,7 @@ import storeAdminRoutes from "./store-admin.routes";
 import adminRoutes from "./admin.routes";
 import productRoutes from "./product.routes";
 import storeRoutes from "./store.routes";
+import cartRoutes from "./cart.routes";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/admin", adminRoutes);
 router.use("/admin/store-admins", storeAdminRoutes);
 router.use("/products", productRoutes);
 router.use("/stores", storeRoutes);
+router.use("/cart", cartRoutes);
 
 export default router;
