@@ -13,6 +13,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   CORS_ORIGIN: z.string().default("*"),
+  RAJAONGKIR_API_KEY: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -37,6 +38,7 @@ export const config = {
     expiresIn: env.JWT_EXPIRES_IN,
   },
   corsOrigin: env.CORS_ORIGIN,
+  rajaongkirApiKey: env.RAJAONGKIR_API_KEY,
 } as const;
 
 export default config;
