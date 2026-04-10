@@ -1,0 +1,159 @@
+import prisma from "../config/database";
+import { StockJournalType } from "../generated/prisma";
+
+export interface CreateJournalInput {
+  stockId: string;
+  oldQty: number;
+  newQty: number;
+  change: number;
+  type: StockJournalType;
+  reason?: string;
+  userId: string;
+  orderId?: string;
+}
+
+/**
+ * Create a stock journal entry for audit trail
+ * Single responsibility: only handles journal creation
+ */
+export const createStockJournal = async (data: CreateJournalInput) => {
+  return await prisma.stockJournal.create({
+    data: {
+      stockId: data.stockId,
+      oldQty: data.oldQty,
+      newQty: data.newQty,
+      change: data.change,
+      type: data.type,
+      reason: data.reason || "Manual adjustment",
+      userId: data.userId,
+      orderId: data.orderId,
+    },
+  });
+};
+
+/**
+ * Get stock journals with pagination and filters
+ */
+export interface GetJournalsInput {
+  stockId?: string;
+  productId?: string;
+  storeId?: string;
+  type?: StockJournalType;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  limit?: number;
+}
+
+export const getStockJournals = async (filters: GetJournalsInput) => {
+  const {
+    stockId,
+    productId,
+    storeId,
+    type,
+    startDate,
+    endDate,
+    page = 1,
+    limit = 20,
+  } = filters;
+
+  const skip = (page - 1) * limit;
+
+  // Build where clause dynamically
+  const where: any = {};
+
+  if (stockId) {
+    where.stockId = stockId;
+  }
+
+  if (productId || storeId) {
+    where.stock = {};
+    if (productId) {
+      where.stock.productId = productId;
+    }
+    if (storeId) {
+      where.stock.storeId = storeId;
+    }
+  }
+
+  if (type) {
+    where.type = type;
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) {
+      where.createdAt.gte = startDate;
+    }
+    if (endDate) {
+      where.createdAt.lte = endDate;
+    }
+  }
+
+  const [journals, total] = await Promise.all([
+    prisma.stockJournal.findMany({
+      where,
+      include: {
+        stock: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+            store: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.stockJournal.count({ where }),
+  ]);
+
+  return {
+    journals,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+/**
+ * Get journal statistics for a specific stock
+ */
+export const getStockJournalStats = async (stockId: string) => {
+  const stats = await prisma.stockJournal.groupBy({
+    by: ["type"],
+    where: {
+      stockId,
+    },
+    _sum: {
+      change: true,
+    },
+    _count: {
+      id: true,
+    },
+  });
+
+  return stats;
+};
