@@ -33,7 +33,7 @@ export const getPublicProducts = async (
   }
 };
 
-export const getCategories = async (req: Request, res: Response, next: NextFunction) => {
+export const getCategories = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const categories = await productService.getCategories();
     res.status(200).json({
