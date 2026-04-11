@@ -45,6 +45,23 @@ export const getCategories = async (_req: Request, res: Response, next: NextFunc
   }
 };
 
+export const getProductById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+    const product = await productService.getProductById(productId);
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createProduct = async (
   req: Request,
   res: Response,
