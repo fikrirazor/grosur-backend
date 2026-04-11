@@ -47,6 +47,20 @@ async function main() {
     },
   });
 
+  // 3.5. Create STORE_ADMIN (after store is created)
+  const storeAdmin = await prisma.user.upsert({
+    where: { email: 'storeadmin@example.com' },
+    update: {},
+    create: {
+      email: 'storeadmin@example.com',
+      password: hashedPassword,
+      name: 'Store Admin Jakarta',
+      role: 'STORE_ADMIN',
+      isVerified: true,
+      managedStoreId: store.id,
+    },
+  });
+
   // 4. Create CATEGORIES
   const catSembako = await prisma.category.upsert({
     where: { slug: 'sembako' },
@@ -130,7 +144,7 @@ async function main() {
   }
 
   console.log('Seed completed successfully!');
-  console.log({ admin, user, store, products: [prodRice, prodMilk, prodEgg] });
+  console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }
 
 main()
