@@ -13,3 +13,11 @@ export interface UpdateProductInput {
   categoryId?: string;
   isActive?: boolean;
 }
+
+export interface ProductQuery {
+  storeId: string;
+  search?: string;
+  categoryId?: string;
+  page: number;
+  limit: number;
+}
