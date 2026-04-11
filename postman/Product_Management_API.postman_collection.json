@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Product Management API",
+    "name": "Product CRUD",
     "description": "CRUD operations for products with Cloudinary image upload",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
