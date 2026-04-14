@@ -274,7 +274,7 @@ async function main() {
   }
 
   // 8. Create SAMPLE DISCOUNTS (for testing)
-  // Discount 1: Percentage discount for Beras in Jakarta
+  // Discount 1: Percentage discount for Beras in Jakarta (ACTIVE - Future dates)
   await prisma.discount.create({
     data: {
       storeId: store.id,
@@ -283,13 +283,13 @@ async function main() {
       value: "20", // 20%
       minSpend: "100000",
       maxDiscount: "50000",
-      startDate: new Date("2024-02-01T00:00:00Z"),
-      endDate: new Date("2024-02-28T23:59:59Z"),
+      startDate: new Date("2024-01-01T00:00:00Z"),
+      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
       isActive: true,
     },
   });
 
-  // Discount 2: B1G1 for Susu in Jakarta
+  // Discount 2: B1G1 for Susu in Jakarta (ACTIVE - Future dates)
   await prisma.discount.create({
     data: {
       storeId: store.id,
@@ -298,13 +298,13 @@ async function main() {
       value: "0",
       buyQty: 2,
       freeQty: 1,
-      startDate: new Date("2024-02-01T00:00:00Z"),
-      endDate: new Date("2024-02-14T23:59:59Z"),
+      startDate: new Date("2024-01-01T00:00:00Z"),
+      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
       isActive: true,
     },
   });
 
-  // Discount 3: Nominal discount for all products in Bandung
+  // Discount 3: Nominal discount for all products in Bandung (ACTIVE - Future dates)
   await prisma.discount.create({
     data: {
       storeId: storeBandung.id,
@@ -312,14 +312,14 @@ async function main() {
       type: "NOMINAL",
       value: "15000", // Rp 15,000 off
       minSpend: "50000",
-      startDate: new Date("2024-02-10T00:00:00Z"),
-      endDate: new Date("2024-03-10T23:59:59Z"),
+      startDate: new Date("2024-01-01T00:00:00Z"),
+      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
       isActive: true,
     },
   });
 
   // 9. Create SAMPLE VOUCHERS (for testing)
-  // Voucher 1: Percentage voucher for user
+  // Voucher 1: Percentage voucher for user (ACTIVE - Future expiry)
   await prisma.voucher.create({
     data: {
       code: "WELCOME25",
@@ -329,12 +329,12 @@ async function main() {
       maxDiscount: "50000",
       minSpend: "100000",
       qty: 1,
-      expiryDate: new Date("2024-12-31T23:59:59Z"),
+      expiryDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
       isUsed: false,
     },
   });
 
-  // Voucher 2: Nominal voucher for product-specific
+  // Voucher 2: Nominal voucher for product-specific (ACTIVE - Future expiry)
   await prisma.voucher.create({
     data: {
       code: "BERAS10K",
@@ -344,12 +344,12 @@ async function main() {
       value: "10000", // Rp 10,000 off
       minSpend: "50000",
       qty: 3, // Can be used 3 times
-      expiryDate: new Date("2024-06-30T23:59:59Z"),
+      expiryDate: new Date("2027-06-30T23:59:59Z"), // Active until mid 2027
       isUsed: false,
     },
   });
 
-  // Voucher 3: Free shipping voucher
+  // Voucher 3: Free shipping voucher (ACTIVE - Future expiry)
   await prisma.voucher.create({
     data: {
       code: "FREESHIP",
@@ -358,12 +358,12 @@ async function main() {
       value: "15000", // Rp 15,000 shipping discount
       minSpend: "75000",
       qty: 2,
-      expiryDate: new Date("2024-04-30T23:59:59Z"),
+      expiryDate: new Date("2027-04-30T23:59:59Z"), // Active until Apr 2027
       isUsed: false,
     },
   });
 
-  // Voucher 4: Used voucher (for testing)
+  // Voucher 4: Used voucher (for testing) - Keep as used/expired
   await prisma.voucher.create({
     data: {
       code: "USED50",
@@ -372,7 +372,7 @@ async function main() {
       value: "50000",
       minSpend: "200000",
       qty: 0, // Exhausted
-      expiryDate: new Date("2024-03-31T23:59:59Z"),
+      expiryDate: new Date("2024-03-31T23:59:59Z"), // Expired
       isUsed: true,
       usedAt: new Date("2024-02-15T10:30:00Z"),
     },
