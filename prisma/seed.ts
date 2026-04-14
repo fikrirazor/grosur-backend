@@ -47,6 +47,23 @@ async function main() {
     },
   });
 
+  // 3.2. Create Second Store (for transfer testing)
+  const storeBandung = await prisma.store.upsert({
+    where: { name: 'Grosur Cabang Bandung' },
+    update: {},
+    create: {
+      name: 'Grosur Cabang Bandung',
+      description: 'Cabang Grosur di Bandung',
+      address: 'Jl. Asia Afrika No. 10, Bandung',
+      province: 'Jawa Barat',
+      city: 'Bandung',
+      district: 'Bandung Wetan',
+      latitude: -6.9175,
+      longitude: 107.6191,
+      maxRadius: 80,
+    },
+  });
+
   // 3.5. Create STORE_ADMIN (after store is created)
   const storeAdmin = await prisma.user.upsert({
     where: { email: 'storeadmin@example.com' },
@@ -128,6 +145,9 @@ async function main() {
     { productId: prodRice.id, storeId: store.id, quantity: 50 },
     { productId: prodMilk.id, storeId: store.id, quantity: 100 },
     { productId: prodEgg.id, storeId: store.id, quantity: 0 }, // Out of stock example
+    // Stock for second store (Bandung)
+    { productId: prodRice.id, storeId: storeBandung.id, quantity: 20 },
+    { productId: prodMilk.id, storeId: storeBandung.id, quantity: 30 },
   ];
 
   for (const s of stocks) {
@@ -190,6 +210,44 @@ async function main() {
         type: "IN",
         reason: "Restock from warehouse",
         userId: storeAdmin.id,
+      },
+    });
+  }
+
+  // Create sample TRANSFER journals
+  const riceStockBandung = await prisma.stock.findUnique({
+    where: {
+      productId_storeId: {
+        productId: prodRice.id,
+        storeId: storeBandung.id,
+      },
+    },
+  });
+
+  if (riceStock && riceStockBandung) {
+    // Transfer journal OUT (Jakarta)
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStock.id,
+        oldQty: 50,
+        newQty: 40,
+        change: -10,
+        type: "TRANSFER",
+        reason: "Transfer to Bandung branch for restock",
+        userId: admin.id,
+      },
+    });
+
+    // Transfer journal IN (Bandung)
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStockBandung.id,
+        oldQty: 20,
+        newQty: 30,
+        change: 10,
+        type: "TRANSFER",
+        reason: "Received transfer from Jakarta branch",
+        userId: admin.id,
       },
     });
   }
