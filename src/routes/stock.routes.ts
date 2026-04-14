@@ -3,7 +3,7 @@ import * as stockController from "../controllers/stock.controller";
 import * as stockJournalController from "../controllers/stock-journal.controller";
 import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
 import { validateRequest } from "../middleware/validation.middleware";
-import { updateStockSchema } from "../validations/stock.validation";
+import { updateStockSchema, transferStockSchema } from "../validations/stock.validation";
 
 const router = Router();
 
@@ -14,6 +14,15 @@ router.patch(
   authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
   validateRequest(updateStockSchema),
   stockController.updateStock,
+);
+
+// Transfer stock between stores - SUPER_ADMIN only
+router.post(
+  "/transfer",
+  verifyToken,
+  authorizeRoles("SUPER_ADMIN"),
+  validateRequest(transferStockSchema),
+  stockController.transferStock,
 );
 
 // Get stock journals - read only
