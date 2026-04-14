@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 
-export const getStores = async (req: Request, res: Response, next: NextFunction) => {
+export const getStores = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const stores = await prisma.store.findMany({
       where: { isActive: true },

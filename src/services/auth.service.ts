@@ -8,6 +8,7 @@ const USER_SELECT = {
   name: true,
   email: true,
   role: true,
+  managedStore: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -27,7 +28,10 @@ export const loginUser = async (data: any) => {
 };
 
 const checkUserExists = async (email: string) => {
-  return await prisma.user.findUnique({ where: { email } });
+  return await prisma.user.findUnique({
+    where: { email },
+    include: { managedStore: true },
+  });
 };
 
 const createUserAccount = async (name: string, email: string, pass: string) => {
