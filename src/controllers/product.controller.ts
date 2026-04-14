@@ -45,6 +45,31 @@ export const getCategories = async (_req: Request, res: Response, next: NextFunc
   }
 };
 
+export const getPublicProductDetail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+    const { storeId, userLat, userLong } = req.query;
+
+    const product = await productService.getProductDetail(
+      productId,
+      userLat ? parseFloat(userLat as string) : undefined,
+      userLong ? parseFloat(userLong as string) : undefined,
+      storeId as string | undefined
+    );
+
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getProductById = async (
   req: Request,
   res: Response,

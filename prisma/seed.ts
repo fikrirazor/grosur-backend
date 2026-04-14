@@ -157,18 +157,59 @@ async function main() {
     },
   });
 
+  // Product 4: Minyak Goreng (High stock)
+  const prodOil = await prisma.product.upsert({
+    where: { slug: 'minyak-goreng-2l' },
+    update: {},
+    create: {
+      name: 'Minyak Goreng 2L',
+      slug: 'minyak-goreng-2l',
+      description: 'Minyak goreng kelapa sawit berkualitas 2 liter.',
+      price: 35000,
+      categoryId: catSembako.id,
+      isActive: true,
+      images: {
+        create: { url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=400' }
+      }
+    },
+  });
+
+  // Product 5: Gula Pasir (Medium stock)
+  const prodSugar = await prisma.product.upsert({
+    where: { slug: 'gula-pasir-1kg' },
+    update: {},
+    create: {
+      name: 'Gula Pasir 1kg',
+      slug: 'gula-pasir-1kg',
+      description: 'Gula pasir putih premium kemasan 1kg.',
+      price: 15000,
+      categoryId: catSembako.id,
+      isActive: true,
+      images: {
+        create: { url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&q=80&w=400' }
+      }
+    },
+  });
+
   // 6. Create STOCKS
   const stocks = [
     { productId: prodRice.id, storeId: store.id, quantity: 50 },
     { productId: prodMilk.id, storeId: store.id, quantity: 100 },
     { productId: prodEgg.id, storeId: store.id, quantity: 0 }, // Out of stock example
+    { productId: prodOil.id, storeId: store.id, quantity: 75 },
+    { productId: prodSugar.id, storeId: store.id, quantity: 30 },
     // Stock for second store (Bandung)
     { productId: prodRice.id, storeId: storeBandung.id, quantity: 20 },
     { productId: prodMilk.id, storeId: storeBandung.id, quantity: 30 },
+    { productId: prodEgg.id, storeId: storeBandung.id, quantity: 45 },
+    { productId: prodOil.id, storeId: storeBandung.id, quantity: 60 },
+    { productId: prodSugar.id, storeId: storeBandung.id, quantity: 25 },
     // Stock for third store (Surabaya)
     { productId: prodRice.id, storeId: storeSurabaya.id, quantity: 15 },
     { productId: prodMilk.id, storeId: storeSurabaya.id, quantity: 25 },
     { productId: prodEgg.id, storeId: storeSurabaya.id, quantity: 40 },
+    { productId: prodOil.id, storeId: storeSurabaya.id, quantity: 50 },
+    { productId: prodSugar.id, storeId: storeSurabaya.id, quantity: 20 },
   ];
 
   for (const s of stocks) {
