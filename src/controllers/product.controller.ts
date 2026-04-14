@@ -51,15 +51,54 @@ export const getPublicProductDetail = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { productId } = req.params;
+    const { productId } = req.params; // This could be an ID or a Slug
     const { storeId, userLat, userLong } = req.query;
 
-    const product = await productService.getProductDetail(
-      productId,
-      userLat ? parseFloat(userLat as string) : undefined,
-      userLong ? parseFloat(userLong as string) : undefined,
-      storeId as string | undefined
-    );
+    let product;
+
+    // 1. If it looks like a UUID, we can try the ID-based service
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId);
+
+    if (!isUUID && storeId) {
+      // 2. If it's a slug and we have a storeId, use the specialized public detail service
+      product = await productService.getPublicProductDetail(productId, storeId as string);
+      
+      // 3. Resilience: If not found in THIS store, check if it exists in ANY store
+      if (!product) {
+         const globalCheck = await prisma.product.findUnique({ where: { slug: productId }, include: { stocks: { include: { store: true } } } });
+         if (globalCheck) {
+            // Find a store that HAS this product
+            const availableStore = globalCheck.stocks.find(s => s.quantity > 0);
+            const message = availableStore 
+              ? `Produk ini tidak tersedia di cabang terpilih, tapi tersedia di ${availableStore.store.name}.`
+              : `Produk ini ada di katalog kami, namun sedang habis di semua cabang.`;
+            
+            res.status(404).json({
+              success: false,
+              message,
+              availableAt: availableStore?.storeId
+            });
+            return;
+         }
+      }
+    } else {
+      // 4. Otherwise use the standard detailed lookup (handles nearest store logic)
+      product = await productService.getProductDetail(
+        productId,
+        userLat ? parseFloat(userLat as string) : undefined,
+        userLong ? parseFloat(userLong as string) : undefined,
+        storeId as string | undefined
+      );
+    }
+
+    if (!product) {
+      res.status(404).json({
+        success: false,
+        message: `Product "${productId}" not found in the selected store (${storeId || 'no store provided'}). Please ensure the product is active and available at this location.`,
+        debug: { productId, storeId }
+      });
+      return;
+    }
 
     res.status(200).json({
       success: true,
