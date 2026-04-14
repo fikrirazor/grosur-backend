@@ -63,3 +63,31 @@ export const updateStock = async (
     next(error);
   }
 };
+
+export const transferStock = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { productId, fromStoreId, toStoreId, quantity, reason } = req.body;
+    const userId = (req as any).user.id;
+
+    const result = await stockService.transferStock({
+      productId,
+      fromStoreId,
+      toStoreId,
+      quantity,
+      reason,
+      userId,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
