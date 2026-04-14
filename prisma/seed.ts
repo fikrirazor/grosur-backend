@@ -273,6 +273,51 @@ async function main() {
     });
   }
 
+  // 8. Create SAMPLE DISCOUNTS (for testing)
+  // Discount 1: Percentage discount for Beras in Jakarta
+  await prisma.discount.create({
+    data: {
+      storeId: store.id,
+      productId: prodRice.id,
+      type: "PERCENT",
+      value: "20", // 20%
+      minSpend: "100000",
+      maxDiscount: "50000",
+      startDate: new Date("2024-02-01T00:00:00Z"),
+      endDate: new Date("2024-02-28T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  // Discount 2: B1G1 for Susu in Jakarta
+  await prisma.discount.create({
+    data: {
+      storeId: store.id,
+      productId: prodMilk.id,
+      type: "B1G1",
+      value: "0",
+      buyQty: 2,
+      freeQty: 1,
+      startDate: new Date("2024-02-01T00:00:00Z"),
+      endDate: new Date("2024-02-14T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  // Discount 3: Nominal discount for all products in Bandung
+  await prisma.discount.create({
+    data: {
+      storeId: storeBandung.id,
+      productId: null, // Store-wide discount
+      type: "NOMINAL",
+      value: "15000", // Rp 15,000 off
+      minSpend: "50000",
+      startDate: new Date("2024-02-10T00:00:00Z"),
+      endDate: new Date("2024-03-10T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }
