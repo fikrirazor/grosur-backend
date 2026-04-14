@@ -318,6 +318,66 @@ async function main() {
     },
   });
 
+  // 9. Create SAMPLE VOUCHERS (for testing)
+  // Voucher 1: Percentage voucher for user
+  await prisma.voucher.create({
+    data: {
+      code: "WELCOME25",
+      userId: user.id,
+      type: "TOTAL",
+      value: "25", // 25%
+      maxDiscount: "50000",
+      minSpend: "100000",
+      qty: 1,
+      expiryDate: new Date("2024-12-31T23:59:59Z"),
+      isUsed: false,
+    },
+  });
+
+  // Voucher 2: Nominal voucher for product-specific
+  await prisma.voucher.create({
+    data: {
+      code: "BERAS10K",
+      userId: user.id,
+      productId: prodRice.id,
+      type: "PRODUCT",
+      value: "10000", // Rp 10,000 off
+      minSpend: "50000",
+      qty: 3, // Can be used 3 times
+      expiryDate: new Date("2024-06-30T23:59:59Z"),
+      isUsed: false,
+    },
+  });
+
+  // Voucher 3: Free shipping voucher
+  await prisma.voucher.create({
+    data: {
+      code: "FREESHIP",
+      userId: user.id,
+      type: "SHIPPING",
+      value: "15000", // Rp 15,000 shipping discount
+      minSpend: "75000",
+      qty: 2,
+      expiryDate: new Date("2024-04-30T23:59:59Z"),
+      isUsed: false,
+    },
+  });
+
+  // Voucher 4: Used voucher (for testing)
+  await prisma.voucher.create({
+    data: {
+      code: "USED50",
+      userId: user.id,
+      type: "TOTAL",
+      value: "50000",
+      minSpend: "200000",
+      qty: 0, // Exhausted
+      expiryDate: new Date("2024-03-31T23:59:59Z"),
+      isUsed: true,
+      usedAt: new Date("2024-02-15T10:30:00Z"),
+    },
+  });
+
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }
