@@ -51,29 +51,15 @@ export const getPublicProductDetail = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { slug } = req.params;
-    const { storeId } = req.query;
+    const { productId } = req.params;
+    const { storeId, userLat, userLong } = req.query;
 
-    if (!storeId) {
-      res.status(400).json({
-        success: false,
-        message: "storeId is required",
-      });
-      return;
-    }
-
-    const product = await productService.getPublicProductDetail(
-      slug,
-      storeId as string,
+    const product = await productService.getProductDetail(
+      productId,
+      userLat ? parseFloat(userLat as string) : undefined,
+      userLong ? parseFloat(userLong as string) : undefined,
+      storeId as string | undefined
     );
-
-    if (!product) {
-      res.status(404).json({
-        success: false,
-        message: "Product not found or not available in this store",
-      });
-      return;
-    }
 
     res.status(200).json({
       success: true,

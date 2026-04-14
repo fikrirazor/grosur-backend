@@ -417,3 +417,99 @@ export const uploadProductImages = async (
     images,
   };
 };
+
+/**
+ * Find nearest store by user location
+ */
+const findNearestStore = async (userLat: number, userLong: number) => {
+  const stores = await prisma.store.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, latitude: true, longitude: true },
+  });
+
+  if (stores.length === 0) return null;
+
+  let nearest = stores[0];
+  let minDist = calculateDistance(userLat, userLong, stores[0].latitude, stores[0].longitude);
+
+  for (const store of stores.slice(1)) {
+    const dist = calculateDistance(userLat, userLong, store.latitude, store.longitude);
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = store;
+    }
+  }
+
+  return nearest;
+};
+
+/**
+ * Calculate distance between two coordinates (Haversine formula)
+ */
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+/**
+ * Get product with images and stock info
+ */
+const getProductWithDetails = async (productId: string, storeId: string) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      images: { orderBy: { createdAt: "asc" } },
+      category: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!product) return null;
+
+  const stock = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId, storeId } },
+    select: { quantity: true },
+  });
+
+  return {
+    ...product,
+    stock: stock?.quantity || 0,
+  };
+};
+
+export const getProductDetail = async (
+  productId: string,
+  userLat?: number,
+  userLong?: number,
+  storeId?: string
+) => {
+  let targetStoreId = storeId;
+
+  if (!targetStoreId && userLat && userLong) {
+    const nearestStore = await findNearestStore(userLat, userLong);
+    if (!nearestStore) {
+      throw new AppError(404, "No active stores found", true, "NO_STORES");
+    }
+    targetStoreId = nearestStore.id;
+  }
+
+  if (!targetStoreId) {
+    throw new AppError(400, "Either storeId or user location is required", true, "MISSING_PARAMS");
+  }
+
+  const product = await getProductWithDetails(productId, targetStoreId);
+
+  if (!product) {
+    throw new AppError(404, "Product not found", true, "PRODUCT_NOT_FOUND");
+  }
+
+  return product;
+};
