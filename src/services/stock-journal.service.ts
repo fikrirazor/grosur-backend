@@ -60,7 +60,7 @@ const buildJournalWhereClause = (filters: GetJournalsInput): any => {
  * Fetch journals with product & store details
  */
 const fetchJournalsWithDetails = async (where: any, skip: number, limit: number) => {
-  return await prisma.stockJournal.findMany({
+  const journals = await prisma.stockJournal.findMany({
     where,
     include: {
       stock: {
@@ -75,6 +75,21 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
     skip,
     take: limit,
   });
+
+  // Manually attach user since the relation is missing in prisma schema
+  const userIds = [...new Set(journals.map(j => j.userId).filter(Boolean))];
+  let users: any[] = [];
+  if (userIds.length > 0) {
+    users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true },
+    });
+  }
+
+  return journals.map(journal => ({
+    ...journal,
+    user: users.find(u => u.id === journal.userId) || null,
+  }));
 };
 
 /**
