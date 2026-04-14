@@ -7,6 +7,7 @@ import productRoutes from "./product.routes";
 import categoryRoutes from "./category.routes";
 import stockRoutes from "./stock.routes";
 import storeRoutes from "./store.routes";
+import discountRoutes from "./discount.routes";
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use("/products", productRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/stocks", stockRoutes);
 router.use("/stores", storeRoutes);
+router.use("/discounts", discountRoutes);
 
 export default router;
