@@ -143,6 +143,57 @@ async function main() {
     });
   }
 
+  // 7. Create SAMPLE STOCK JOURNALS (for testing history)
+  const riceStock = await prisma.stock.findUnique({
+    where: {
+      productId_storeId: {
+        productId: prodRice.id,
+        storeId: store.id,
+      },
+    },
+  });
+
+  if (riceStock) {
+    // Journal 1: Initial stock IN
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStock.id,
+        oldQty: 0,
+        newQty: 50,
+        change: 50,
+        type: "IN",
+        reason: "Initial stock from supplier",
+        userId: admin.id,
+      },
+    });
+
+    // Journal 2: Stock OUT (sale)
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStock.id,
+        oldQty: 50,
+        newQty: 45,
+        change: -5,
+        type: "OUT",
+        reason: "Customer order #ORD-001",
+        userId: user.id,
+      },
+    });
+
+    // Journal 3: Stock IN (restock)
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStock.id,
+        oldQty: 45,
+        newQty: 50,
+        change: 5,
+        type: "IN",
+        reason: "Restock from warehouse",
+        userId: storeAdmin.id,
+      },
+    });
+  }
+
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }
