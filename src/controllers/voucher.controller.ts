@@ -84,3 +84,24 @@ export const getUserVouchers = async (
     next(error);
   }
 };
+
+export const claimVoucher = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const payload = req.body;
+
+    const voucher = await voucherService.claimVoucher(userId, payload);
+
+    res.status(201).json({
+      success: true,
+      message: "Voucher berhasil diklaim",
+      data: voucher,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
