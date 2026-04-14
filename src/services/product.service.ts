@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { AppError } from "../middleware/error.middleware";
+import cloudinary from "../config/cloudinary.config";
 
 export interface ProductQuery {
   storeId: string;
@@ -102,6 +103,23 @@ export const getCategories = async () => {
       name: "asc",
     },
   });
+};
+
+export const getProductById = async (productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      category: true,
+      images: true,
+      stocks: true,
+    },
+  });
+
+  if (!product) {
+    throw new AppError(404, "Product not found", true, "PRODUCT_NOT_FOUND");
+  }
+
+  return product;
 };
 
 export const createProduct = async (data: CreateProductInput) => {
@@ -327,17 +345,27 @@ export const uploadProductImages = async (
     );
   }
 
-  // In production, upload files to S3/Supabase here
-  // For now, we'll simulate by creating image records
-  const imageUrls = files.map((file) => ({
-    url: `/uploads/products/${file.originalname}`,
-    productId,
-  }));
+  // Upload each file buffer to Cloudinary
+  const uploadToCloudinary = (buffer: Buffer): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "grosur/products", resource_type: "image" },
+        (error, result) => {
+          if (error || !result) return reject(error);
+          resolve(result.secure_url);
+        },
+      );
+      stream.end(buffer);
+    });
+
+  const uploadedUrls = await Promise.all(
+    files.map((file) => uploadToCloudinary(file.buffer)),
+  );
 
   const images = await prisma.$transaction(
-    imageUrls.map((imageUrl) =>
+    uploadedUrls.map((url) =>
       prisma.productImage.create({
-        data: imageUrl,
+        data: { url, productId },
       }),
     ),
   );

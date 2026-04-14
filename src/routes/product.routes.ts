@@ -12,6 +12,8 @@ const router = Router();
 
 // Publicly available product routes
 router.get("/", productController.getPublicProducts);
+router.get("/categories", productController.getCategories);
+router.get("/:productId", productController.getProductById);
 
 // Protected routes for Store Admins
 router.post(
