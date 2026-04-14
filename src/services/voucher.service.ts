@@ -164,3 +164,37 @@ export const useVoucher = async (voucherCode: string, _userId: string, orderId: 
     };
   });
 };
+
+export const claimVoucher = async (userId: string, payload: any) => {
+  // Check if user already claimed this specific template
+  const codeGen = `${payload.id}-${userId.substring(0, 5)}`.toUpperCase();
+  
+  const existing = await prisma.voucher.findUnique({
+    where: { code: codeGen }
+  });
+
+  if (existing) {
+    throw new AppError(400, "Voucher ini sudah diklaim sebelumnya.", true, "VOUCHER_ALREADY_CLAIMED");
+  }
+
+  // Create voucher
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + (payload.expiryDays || 7));
+
+  const voucher = await prisma.voucher.create({
+    data: {
+      userId,
+      code: codeGen,
+      type: payload.type, // 'TOTAL', 'SHIPPING', 'PRODUCT'
+      value: payload.value,
+      minSpend: payload.minSpend || null,
+      maxDiscount: payload.maxDiscount || null,
+      qty: 1,
+      isUsed: false,
+      expiryDate,
+    }
+  });
+
+  return voucher;
+};
+
