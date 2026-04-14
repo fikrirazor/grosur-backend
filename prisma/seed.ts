@@ -319,6 +319,13 @@ async function main() {
   });
 
   // 9. Create SAMPLE VOUCHERS (for testing)
+  // Delete existing vouchers first to avoid unique constraint
+  await prisma.voucher.deleteMany({
+    where: {
+      userId: user.id,
+    },
+  });
+
   // Voucher 1: Percentage voucher for user (ACTIVE - Future expiry)
   await prisma.voucher.create({
     data: {
