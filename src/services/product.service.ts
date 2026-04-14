@@ -29,6 +29,7 @@ export interface UpdateProductInput {
 export const getPublicProducts = async (query: ProductQuery) => {
   const { storeId, search, categoryId, page, limit } = query;
   const skip = (page - 1) * limit;
+  const now = new Date();
 
   const where: any = {
     storeId,
@@ -58,6 +59,17 @@ export const getPublicProducts = async (query: ProductQuery) => {
             images: {
               take: 1,
             },
+            discounts: {
+              where: {
+                isActive: true,
+                startDate: { lte: now },
+                endDate: { gte: now },
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+              take: 1,
+            },
           },
         },
       },
@@ -73,20 +85,31 @@ export const getPublicProducts = async (query: ProductQuery) => {
   ]);
 
   return {
-    items: items.map((stock) => ({
-      id: stock.product.id,
-      name: stock.product.name,
-      slug: stock.product.slug,
-      price: stock.product.price,
-      description: stock.product.description,
-      category: stock.product.category.name,
-      categoryId: stock.product.categoryId,
-      image: stock.product.images[0]?.url || null,
-      inventory: {
-        quantity: stock.quantity,
-        storeId: stock.storeId,
-      },
-    })),
+    items: items.map((stock) => {
+      const discount = stock.product.discounts[0];
+      return {
+        id: stock.product.id,
+        name: stock.product.name,
+        slug: stock.product.slug,
+        price: stock.product.price,
+        description: stock.product.description,
+        category: stock.product.category.name,
+        categoryId: stock.product.categoryId,
+        image: stock.product.images[0]?.url || null,
+        discount: discount ? {
+          type: discount.type,
+          value: discount.value,
+          minSpend: discount.minSpend,
+          maxDiscount: discount.maxDiscount,
+          buyQty: discount.buyQty,
+          freeQty: discount.freeQty,
+        } : null,
+        inventory: {
+          quantity: stock.quantity,
+          storeId: stock.storeId,
+        },
+      };
+    }),
     meta: {
       total,
       page,
@@ -98,6 +121,7 @@ export const getPublicProducts = async (query: ProductQuery) => {
 };
 
 export const getPublicProductDetail = async (slug: string, storeId: string) => {
+  const now = new Date();
   const stock = await prisma.stock.findFirst({
     where: {
       storeId,
@@ -111,6 +135,17 @@ export const getPublicProductDetail = async (slug: string, storeId: string) => {
         include: {
           category: true,
           images: true,
+          discounts: {
+            where: {
+              isActive: true,
+              startDate: { lte: now },
+              endDate: { gte: now },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
         },
       },
     },
@@ -119,6 +154,8 @@ export const getPublicProductDetail = async (slug: string, storeId: string) => {
   if (!stock) {
     return null;
   }
+
+  const discount = stock.product.discounts[0];
 
   return {
     id: stock.product.id,
@@ -132,6 +169,14 @@ export const getPublicProductDetail = async (slug: string, storeId: string) => {
       id: img.id,
       url: img.url,
     })),
+    discount: discount ? {
+      type: discount.type,
+      value: discount.value,
+      minSpend: discount.minSpend,
+      maxDiscount: discount.maxDiscount,
+      buyQty: discount.buyQty,
+      freeQty: discount.freeQty,
+    } : null,
     inventory: {
       quantity: stock.quantity,
       storeId: stock.storeId,

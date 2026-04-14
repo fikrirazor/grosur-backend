@@ -12,6 +12,7 @@ export interface CheckoutPreviewInput {
   storeId: string;
   items: CartItem[];
   voucherCode?: string;
+  shippingCost?: number; // Optional externally provided shipping cost
 }
 
 /**
@@ -167,10 +168,10 @@ export const previewCheckout = async (data: CheckoutPreviewInput) => {
   const voucherDiscount = await calculateVoucherDiscount(voucherCode, userId, subtotalAfterProductDiscount);
 
   // Calculate shipping
-  const shippingCost = calculateShipping(storeId);
+  const baseShippingCost = data.shippingCost !== undefined ? data.shippingCost : calculateShipping(storeId);
 
   // Apply shipping voucher if applicable
-  let finalShippingCost = shippingCost;
+  let finalShippingCost = baseShippingCost;
   if (voucherCode) {
     const voucher = await prisma.voucher.findUnique({
       where: { code: voucherCode },
