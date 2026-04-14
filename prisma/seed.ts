@@ -64,6 +64,23 @@ async function main() {
     },
   });
 
+  // 3.3. Create Third Store (for more transfer options)
+  const storeSurabaya = await prisma.store.upsert({
+    where: { name: 'Grosur Cabang Surabaya' },
+    update: {},
+    create: {
+      name: 'Grosur Cabang Surabaya',
+      description: 'Cabang Grosur di Surabaya',
+      address: 'Jl. Tunjungan No. 5, Surabaya',
+      province: 'Jawa Timur',
+      city: 'Surabaya',
+      district: 'Genteng',
+      latitude: -7.2575,
+      longitude: 112.7521,
+      maxRadius: 90,
+    },
+  });
+
   // 3.5. Create STORE_ADMIN (after store is created)
   const storeAdmin = await prisma.user.upsert({
     where: { email: 'storeadmin@example.com' },
@@ -148,6 +165,10 @@ async function main() {
     // Stock for second store (Bandung)
     { productId: prodRice.id, storeId: storeBandung.id, quantity: 20 },
     { productId: prodMilk.id, storeId: storeBandung.id, quantity: 30 },
+    // Stock for third store (Surabaya)
+    { productId: prodRice.id, storeId: storeSurabaya.id, quantity: 15 },
+    { productId: prodMilk.id, storeId: storeSurabaya.id, quantity: 25 },
+    { productId: prodEgg.id, storeId: storeSurabaya.id, quantity: 40 },
   ];
 
   for (const s of stocks) {
