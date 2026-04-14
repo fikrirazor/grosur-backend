@@ -20,7 +20,7 @@ export const getCategories = async () => {
 export const createCategory = async (data: CreateCategoryInput) => {
   const { name } = data;
 
-  // Check if category with same name already exists
+  // Check kalau ada kategori duplikat
   const existingCategory = await prisma.category.findFirst({
     where: {
       name: {
@@ -60,7 +60,7 @@ export const updateCategory = async (
   categoryId: string,
   data: UpdateCategoryInput,
 ) => {
-  // Check if category exists
+  // Check kalau kategori ada
   const existingCategory = await prisma.category.findUnique({
     where: { id: categoryId },
   });
@@ -74,7 +74,7 @@ export const updateCategory = async (
     );
   }
 
-  // If updating name, check for duplicates
+  // Jika nama diupdate, cek kalau ada kategori duplikat
   if (data.name && data.name !== existingCategory.name) {
     const duplicateCategory = await prisma.category.findFirst({
       where: {
@@ -119,7 +119,7 @@ export const updateCategory = async (
 };
 
 export const deleteCategory = async (categoryId: string) => {
-  // Check if category exists
+  // check kalau kategori ada
   const existingCategory = await prisma.category.findUnique({
     where: { id: categoryId },
   });
@@ -133,7 +133,7 @@ export const deleteCategory = async (categoryId: string) => {
     );
   }
 
-  // Check if category has products
+  // Check kalau kategori ada produk
   const productCount = await prisma.product.count({
     where: { categoryId },
   });
