@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { AppError } from "../middleware/error.middleware";
 import { StockJournalType } from "../generated/prisma";
+import { createStockJournal } from "./stock-journal.service";
 
 export interface UpdateStockInput {
   productId: string;
@@ -75,17 +76,15 @@ export const updateStock = async (data: UpdateStockInput) => {
       },
     });
 
-    // Create stock journal entry for audit trail
-    await tx.stockJournal.create({
-      data: {
-        stockId: stock.id,
-        oldQty,
-        newQty,
-        change,
-        type: journalType,
-        reason: reason || "Manual adjustment",
-        userId,
-      },
+    // Create stock journal entry using dedicated journal service
+    await createStockJournal({
+      stockId: stock.id,
+      oldQty,
+      newQty,
+      change,
+      type: journalType,
+      reason,
+      userId,
     });
 
     return updated;

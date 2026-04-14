@@ -1,0 +1,316 @@
+{
+  "info": {
+    "name": "Stock Journaling",
+    "description": "Stock journal history and audit trail\n\nCredentials:\n- SUPER_ADMIN: admin@example.com / Password123!\n- STORE_ADMIN: storeadmin@example.com / Password123!\n\nSeed Data: 3 sample journals for Beras Premium 5kg",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login as SUPER_ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signin",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signin"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "  pm.collectionVariables.set('access_token', response.data.token);",
+                  "  console.log('SUPER_ADMIN token saved');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login as STORE_ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"storeadmin@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signin",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signin"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "  pm.collectionVariables.set('access_token', response.data.token);",
+                  "  console.log('STORE_ADMIN token saved');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stock Journals",
+      "item": [
+        {
+          "name": "Get All Journals (Default)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Type (IN only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?type=IN&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "IN"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Type (OUT only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?type=OUT&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "OUT"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Product ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?productId=b4b2fd3e-baa5-4429-b3e1-709af8363509&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "b4b2fd3e-baa5-4429-b3e1-709af8363509"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Store ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?storeId=9e30396f-08b5-4c15-8b99-35b9f14e1f98&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "9e30396f-08b5-4c15-8b99-35b9f14e1f98"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals?startDate=2024-01-01&endDate=2024-12-31&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Journal Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stocks/journals/:stockId/stats",
+              "host": ["{{base_url}}"],
+              "path": ["stocks", "journals", ":stockId", "stats"],
+              "variable": [
+                {
+                  "key": "stockId",
+                  "value": "stock-uuid-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "Get Products (Find IDs)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?storeId=9e30396f-08b5-4c15-8b99-35b9f14e1f98&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "9e30396f-08b5-4c15-8b99-35b9f14e1f98"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
