@@ -426,6 +426,9 @@ async function main() {
     },
   });
 
+  // Note: Sample orders should be created via API or separate seed script
+  // Orders require proper Address records and follow complex relationships
+
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }
