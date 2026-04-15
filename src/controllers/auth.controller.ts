@@ -64,9 +64,9 @@ const sendTokenResponse = (res: Response, token: string, user: any) => {
 
   return res.status(200).json({
     message: "Login successful",
-    data: { 
-      id: user.id, 
-      email: user.email, 
+    data: {
+      id: user.id,
+      email: user.email,
       role: user.role,
       name: user.name,
       profilePicture: user.photo
@@ -86,6 +86,8 @@ export const registerHandler = async (req: Request, res: Response) => {
     if (!user) user = await createUnverifiedUser(email, referredBy);
 
     const token = generateRandomToken();
+
+
     await createVerifyToken(user.id, token);
     await sendVerificationEmail(email, token);
 
@@ -119,6 +121,7 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const token = generateRandomToken();
+    console.log("RESET TOKEN : >>>>>>>>> ", token, "<<<<<<<");
     await createResetToken(user.id, token);
     await sendResetPasswordEmail(user.email, token);
 
@@ -199,10 +202,10 @@ export const googleLogin = async (req: Request, res: Response) => {
       message: "Login successful",
       data: {
         token,
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          name: user.name, 
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
           role: user.role,
           profilePicture: user.photo
         },

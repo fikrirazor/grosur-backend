@@ -14,6 +14,11 @@ datasource db {
 // ENUMS
 // ============================================
 
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
 enum Role {
   USER
   SUPER_ADMIN
@@ -66,18 +71,19 @@ enum VerificationTokenType {
 // ============================================
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
+  id           String       @id @default(uuid())
+  email        String       @unique
   password     String?
   name         String?
   phone        String?
   photo        String?
-  role         Role     @default(USER)
-  isVerified   Boolean  @default(false)
-  referralCode String   @unique @default(uuid())
+  role         Role         @default(USER)
+  isVerified   Boolean      @default(false)
+  referralCode String       @unique @default(uuid())
   referredBy   String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  provider     AuthProvider @default(CREDENTIALS)
 
   // Relations
   addresses          Address[]
@@ -90,7 +96,7 @@ model User {
   cronJobLogs        CronJobLog[]
 
   managedStoreId String?
-  managedStore   Store? @relation(fields: [managedStoreId], references: [id])
+  managedStore   Store?  @relation(fields: [managedStoreId], references: [id])
 
   @@index([email])
   @@index([role])
@@ -113,12 +119,12 @@ model VerificationToken {
 // ============================================
 
 model Address {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name       String
-  phone      String
-  
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  phone  String
+
   district   String
   detail     String
   postalCode String?
@@ -129,11 +135,11 @@ model Address {
   updatedAt  DateTime @updatedAt
 
   // Keep these for display purposes (e.g., "DI Yogyakarta", "Bantul")
-  province   String
-  city       String
+  province String
+  city     String
 
   // ADD THESE for RajaOngkir API calls (e.g., "5", "39")
-  provinceId String?  
+  provinceId String?
   cityId     String?
 
   orders Order[]
