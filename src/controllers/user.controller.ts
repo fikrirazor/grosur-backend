@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import prisma from "../config/database";
 import { uploadToCloudinary } from "../utils/cloudinary";
+import { sendVerificationEmail } from "../services/mailer.service";
+import { createVerifyToken, generateRandomToken, findUserByEmail } from "../services/auth.service";
+
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {
@@ -56,3 +59,36 @@ const executeProfileUpdate = async (id: string, data: any) => {
     select: { id: true, email: true, name: true, role: true, photo: true }
   });
 };
+
+export const requestEmailChange = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { newEmail } = req.body;
+
+    if (!newEmail) return res.status(400).json({ message: "Email baru wajib diisi" });
+
+    // 1. Check if the new email is already taken by someone else
+    const existingUser = await findUserByEmail(newEmail);
+    if (existingUser) return res.status(400).json({ message: "Email sudah terdaftar" });
+
+    // 2. Update user email and revoke verification status
+    await prisma.user.update({
+      where: { id: userId },
+      data: { email: newEmail, isVerified: false }
+    });
+
+    // 3. Generate token and send email
+    const token = generateRandomToken();
+    console.log("🔑 RAW TOKEN FOR POSTMAN (NEW EMAIL):", token); // Dev Hack
+    await createVerifyToken(userId, token);
+    await sendVerificationEmail(newEmail, token);
+
+    // Note: We clear the cookie here to force them to log back in after verifying
+    res.clearCookie("token", { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+    
+    return res.status(200).json({ message: "Email berhasil diubah. Silakan cek email baru untuk verifikasi." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

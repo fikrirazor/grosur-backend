@@ -6,6 +6,7 @@ import pino from "pino-http";
 import logger from "./utils/logger.util";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
+import addressRoutes from "./routes/address.routes";
 
 const app: Application = express();
 
@@ -39,6 +40,8 @@ app.get("/", (_req, res) => {
     version: "1.0.0",
   });
 });
+
+app.use('/api/addresses', addressRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

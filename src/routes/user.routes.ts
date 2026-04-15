@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { updateProfile } from "../controllers/user.controller";
+import { updateProfile, requestEmailChange } from "../controllers/user.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
 import { upload } from "../middlewares/upload.middleware";
 
@@ -9,8 +9,11 @@ const router = Router();
 router.patch(
     "/profile",
     verifyToken,
-    upload.single("profilePhoto"), // Must match the frontend form field name
+    upload.single("profilePhoto"),
     updateProfile
 );
+
+// POST route for changing the email (requires authentication)
+router.post("/change-email", verifyToken, requestEmailChange);
 
 export default router;
