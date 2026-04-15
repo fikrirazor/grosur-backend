@@ -8,20 +8,20 @@ const MAX_RADIUS_KM = 50;
 
 // Helper 1: Calculate, Filter by 50km, and Sort (Clean Code: 6 lines)
 const getSortedNearbyStores = (lat: number, lng: number, stores: any[]) => {
-  return stores
-    .map(s => ({ ...s, distance: calculateDistance(lat, lng, s.latitude, s.longitude) }))
-    .filter(s => s.distance <= MAX_RADIUS_KM)
-    .sort((a, b) => a.distance - b.distance);
+    return stores
+        .map(s => ({ ...s, distance: calculateDistance(lat, lng, s.latitude, s.longitude) }))
+        .filter(s => s.distance <= MAX_RADIUS_KM)
+        .sort((a, b) => a.distance - b.distance);
 };
 
 // Helper 2: Handle the Main Store Fallback (Clean Code: 5 lines)
 const handleFallback = (stores: any[]) => {
-  // @ts-ignore - Assuming your DB has an 'isMain' boolean, or we just grab the first store
-  const mainStore = stores.find(s => s.isMain) || stores[0];
-  return { 
-    store: mainStore, 
-    message: "Menggunakan toko utama (Lokasi ditolak atau di luar jangkauan 50km)" 
-  };
+    // @ts-ignore - Assuming your DB has an 'isMain' boolean, or we just grab the first store
+    const mainStore = stores.find(s => s.isMain) || stores[0];
+    return {
+        store: mainStore,
+        message: "Menggunakan toko utama (Lokasi ditolak atau di luar jangkauan 50km)"
+    };
 };
 
 export const getAssignedStore = async (req: Request, res: Response) => {
@@ -58,26 +58,26 @@ export const getFallbackStore = async (_req: Request, res: Response) => {
 };
 
 export const getNearestStore = async (req: Request, res: Response) => {
-  try {
-    const { latitude, longitude } = req.body;
-    const stores = await prisma.store.findMany();
-    
-    if (!stores.length) return res.status(404).json({ message: "Data toko kosong" });
+    try {
+        const { latitude, longitude } = req.body;
+        const stores = await prisma.store.findMany();
 
-    // Fallback AC: Triggered if user denies location permission
-    if (!latitude || !longitude) return res.status(200).json(handleFallback(stores));
+        if (!stores.length) return res.status(404).json({ message: "Data toko kosong" });
 
-    // Calculate & Filter AC: Get stores within radius
-    const nearby = getSortedNearbyStores(latitude, longitude, stores);
-    
-    // Fallback AC: Triggered if user is too far from any store
-    if (!nearby.length) return res.status(200).json(handleFallback(stores));
+        // Fallback AC: Triggered if user denies location permission
+        if (!latitude || !longitude) return res.status(200).json(handleFallback(stores));
 
-    // Return the absolute closest store as the primary target
-    return res.status(200).json({ store: nearby[0], message: "Toko terdekat ditemukan" });
-  } catch (error) {
-    return res.status(500).json({ message: "Internal server error" });
-  }
+        // Calculate & Filter AC: Get stores within radius
+        const nearby = getSortedNearbyStores(latitude, longitude, stores);
+
+        // Fallback AC: Triggered if user is too far from any store
+        if (!nearby.length) return res.status(200).json(handleFallback(stores));
+
+        // Return the absolute closest store as the primary target
+        return res.status(200).json({ store: nearby[0], message: "Toko terdekat ditemukan" });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
 };
 
 /* --- CLEAN CODE HELPERS (< 15 Lines) --- */
@@ -105,4 +105,77 @@ const validateAndSendStore = (res: Response, store: any) => {
     }
 
     return res.status(200).json({ data: store });
+};
+
+// ==========================================
+// EPIC 1.5: SUPER ADMIN STORE CRUD
+// ==========================================
+
+export const createStore = async (req: Request, res: Response) => {
+    try {
+        const newStore = await prisma.store.create({ data: req.body });
+        return res.status(201).json({ message: "Cabang berhasil dibuat", data: newStore });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getAllStores = async (_req: Request, res: Response) => {
+    try {
+        const stores = await prisma.store.findMany({
+            orderBy: { createdAt: "desc" }
+        });
+        return res.status(200).json({ data: stores });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const updateStore = async (req: Request, res: Response) => {
+    try {
+        const updated = await prisma.store.update({
+            where: { id: req.params.id },
+            data: req.body
+        });
+        return res.status(200).json({ message: "Cabang berhasil diperbarui", data: updated });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const deleteStore = async (req: Request, res: Response) => {
+    try {
+        await prisma.store.delete({ where: { id: req.params.id } });
+        return res.status(200).json({ message: "Cabang berhasil dihapus" });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const assignStoreAdmin = async (req: Request, res: Response) => {
+    try {
+        const storeId = req.params.id;
+        const { userId } = req.body;
+
+        await executeAssignAdmin(userId, storeId);
+        return res.status(200).json({ message: "Admin berhasil ditugaskan ke cabang ini" });
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// --- CLEAN CODE HELPER (< 15 Lines) ---
+const executeAssignAdmin = async (userId: string, storeId: string) => {
+    return await prisma.$transaction([
+        // Step 1: Remove any existing admin from this store (Demote to standard USER)
+        prisma.user.updateMany({
+            where: { managedStoreId: storeId },
+            data: { managedStoreId: null, role: "USER" }
+        }),
+        // Step 2: Promote the new user to STORE_ADMIN and link to this store
+        prisma.user.update({
+            where: { id: userId },
+            data: { managedStoreId: storeId, role: "STORE_ADMIN" }
+        })
+    ]);
 };

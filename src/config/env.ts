@@ -13,6 +13,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   CLOUDINARY_URL: z.string().url().startsWith("cloudinary://"),
+  RAJAONGKIR_API_KEY: z.string().min(1, "RAJAONGKIR_API_KEY is required"),
+  OPENCAGE_API_KEY: z.string().min(1, "OPENCAGE_API_KEY is required"),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -38,6 +40,12 @@ export const config = {
   },
   cloudinary: {
     url: env.CLOUDINARY_URL,
+  },
+  rajaOngkir: {
+    apiKey: env.RAJAONGKIR_API_KEY,
+  },
+  openCage: {
+    apiKey: env.OPENCAGE_API_KEY,
   },
 } as const;
 

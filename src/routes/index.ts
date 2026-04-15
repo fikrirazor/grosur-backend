@@ -3,6 +3,7 @@ import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 import addressRoutes from "./address.routes";
 import storeRoutes from "./store.routes";
+import shippingRoutes from "./shipping.routes";
 
 const router = Router();
 
@@ -18,7 +19,8 @@ router.get("/health", (_req, res) => {
 // API routes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
-router.use("/address", addressRoutes);
-router.use("/store", storeRoutes);
+router.use("/addresses", addressRoutes);
+router.use("/stores", storeRoutes);
+router.use("/shipping", shippingRoutes);
 
 export default router;
