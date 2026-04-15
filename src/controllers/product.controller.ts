@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as productService from "../services/product.service";
+import prisma from "../config/database";
 
 export const getPublicProducts = async (
   req: Request,

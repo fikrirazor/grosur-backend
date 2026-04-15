@@ -10,6 +10,7 @@ import storeRoutes from "./store.routes";
 import discountRoutes from "./discount.routes";
 import voucherRoutes from "./voucher.routes";
 import checkoutRoutes from "./checkout.routes";
+import salesRoutes from "./sales.routes";
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use("/stores", storeRoutes);
 router.use("/discounts", discountRoutes);
 router.use("/vouchers", voucherRoutes);
 router.use("/checkout", checkoutRoutes);
+router.use("/sales", salesRoutes);
 
 export default router;
