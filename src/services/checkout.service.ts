@@ -178,7 +178,7 @@ export const previewCheckout = async (data: CheckoutPreviewInput) => {
     });
 
     if (voucher && voucher.type === "SHIPPING") {
-      finalShippingCost = Math.max(0, shippingCost - voucherDiscount);
+      finalShippingCost = Math.max(0, baseShippingCost - voucherDiscount);
     }
   }
 

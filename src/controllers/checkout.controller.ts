@@ -8,7 +8,7 @@ export const previewCheckout = async (
 ) => {
   try {
     const userId = (req as any).user.id;
-    const { storeId, items, voucherCode, shippingCost } = req.body;
+    const { storeId, items, voucherCode } = req.body;
 
     if (!storeId || !items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({
