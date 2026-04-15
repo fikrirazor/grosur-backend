@@ -426,8 +426,285 @@ async function main() {
     },
   });
 
-  // Note: Sample orders should be created via API or separate seed script
-  // Orders require proper Address records and follow complex relationships
+  // 10. Create SAMPLE ADDRESSES (required for orders)
+  const addressJakarta = await prisma.address.create({
+    data: {
+      userId: user.id,
+      name: "Rumah Jakarta",
+      phone: "081234567890",
+      province: "DKI Jakarta",
+      city: "Jakarta Selatan",
+      district: "Kebayoran Baru",
+      detail: "Jl. Sudirman No. 10",
+      postalCode: "12190",
+      isDefault: true,
+    },
+  });
+
+  const addressBandung = await prisma.address.create({
+    data: {
+      userId: user.id,
+      name: "Rumah Bandung",
+      phone: "081234567891",
+      province: "Jawa Barat",
+      city: "Bandung",
+      district: "Bandung Wetan",
+      detail: "Jl. Asia Afrika No. 20",
+      postalCode: "40115",
+      isDefault: false,
+    },
+  });
+
+  const addressSurabaya = await prisma.address.create({
+    data: {
+      userId: user.id,
+      name: "Rumah Surabaya",
+      phone: "081234567892",
+      province: "Jawa Timur",
+      city: "Surabaya",
+      district: "Genteng",
+      detail: "Jl. Tunjungan No. 30",
+      postalCode: "60275",
+      isDefault: false,
+    },
+  });
+
+  // Get stock IDs for order items
+  const riceStockJakarta = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodRice.id, storeId: store.id } },
+  });
+  const milkStockJakarta = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodMilk.id, storeId: store.id } },
+  });
+  const oilStockJakarta = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodOil.id, storeId: store.id } },
+  });
+  const sugarStockJakarta = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodSugar.id, storeId: store.id } },
+  });
+  const milkStockBandung = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodMilk.id, storeId: storeBandung.id } },
+  });
+  const eggStockSurabaya = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodEgg.id, storeId: storeSurabaya.id } },
+  });
+
+  // 11. Create SAMPLE ORDERS (for sales report testing)
+  // Order 1: January 2024 - Jakarta Store
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240115-001",
+      userId: user.id,
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      subtotal: "240500",
+      shippingCost: "10000",
+      discountAmount: "0",
+      totalAmount: "250500",
+      createdAt: new Date("2024-01-15T10:30:00Z"),
+      paidAt: new Date("2024-01-15T10:35:00Z"),
+      confirmedAt: new Date("2024-01-15T11:00:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodRice.id,
+            stockId: riceStockJakarta!.id,
+            quantity: 2,
+            price: "75000",
+            discount: "0",
+            subtotal: "150000",
+          },
+          {
+            productId: prodMilk.id,
+            stockId: milkStockJakarta!.id,
+            quantity: 3,
+            price: "18500",
+            discount: "0",
+            subtotal: "55500",
+          },
+          {
+            productId: prodOil.id,
+            stockId: oilStockJakarta!.id,
+            quantity: 1,
+            price: "35000",
+            discount: "0",
+            subtotal: "35000",
+          },
+        ],
+      },
+    },
+  });
+
+  // Order 2: January 2024 - Jakarta Store
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240120-002",
+      userId: user.id,
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      subtotal: "150000",
+      shippingCost: "10000",
+      discountAmount: "15000",
+      totalAmount: "145000",
+      createdAt: new Date("2024-01-20T14:15:00Z"),
+      paidAt: new Date("2024-01-20T14:20:00Z"),
+      confirmedAt: new Date("2024-01-20T15:00:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodRice.id,
+            stockId: riceStockJakarta!.id,
+            quantity: 1,
+            price: "75000",
+            discount: "0",
+            subtotal: "75000",
+          },
+          {
+            productId: prodSugar.id,
+            stockId: sugarStockJakarta!.id,
+            quantity: 5,
+            price: "15000",
+            discount: "0",
+            subtotal: "75000",
+          },
+        ],
+      },
+    },
+  });
+
+  // Order 3: January 2024 - Bandung Store
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240118-003",
+      userId: user.id,
+      storeId: storeBandung.id,
+      addressId: addressBandung.id,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      subtotal: "185000",
+      shippingCost: "12000",
+      discountAmount: "0",
+      totalAmount: "197000",
+      createdAt: new Date("2024-01-18T09:45:00Z"),
+      paidAt: new Date("2024-01-18T09:50:00Z"),
+      confirmedAt: new Date("2024-01-18T10:30:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodMilk.id,
+            stockId: milkStockBandung!.id,
+            quantity: 10,
+            price: "18500",
+            discount: "0",
+            subtotal: "185000",
+          },
+        ],
+      },
+    },
+  });
+
+  // Order 4: February 2024 - Jakarta Store
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240210-004",
+      userId: user.id,
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      subtotal: "300000",
+      shippingCost: "10000",
+      discountAmount: "30000",
+      totalAmount: "280000",
+      createdAt: new Date("2024-02-10T16:20:00Z"),
+      paidAt: new Date("2024-02-10T16:25:00Z"),
+      confirmedAt: new Date("2024-02-10T17:00:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodRice.id,
+            stockId: riceStockJakarta!.id,
+            quantity: 4,
+            price: "75000",
+            discount: "0",
+            subtotal: "300000",
+          },
+        ],
+      },
+    },
+  });
+
+  // Order 5: January 2024 - Surabaya Store
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240125-005",
+      userId: user.id,
+      storeId: storeSurabaya.id,
+      addressId: addressSurabaya.id,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      subtotal: "125000",
+      shippingCost: "15000",
+      discountAmount: "0",
+      totalAmount: "140000",
+      createdAt: new Date("2024-01-25T11:00:00Z"),
+      paidAt: new Date("2024-01-25T11:05:00Z"),
+      confirmedAt: new Date("2024-01-25T12:00:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodEgg.id,
+            stockId: eggStockSurabaya!.id,
+            quantity: 5,
+            price: "25000",
+            discount: "0",
+            subtotal: "125000",
+          },
+        ],
+      },
+    },
+  });
+
+  // Order 6: PENDING order (should NOT appear in sales report)
+  await prisma.order.create({
+    data: {
+      orderNumber: "ORD-20240128-006",
+      userId: user.id,
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      status: "WAITING_PAYMENT",
+      paymentStatus: "PENDING",
+      subtotal: "467500",
+      shippingCost: "10000",
+      discountAmount: "0",
+      totalAmount: "477500",
+      createdAt: new Date("2024-01-28T08:00:00Z"),
+      items: {
+        create: [
+          {
+            productId: prodRice.id,
+            stockId: riceStockJakarta!.id,
+            quantity: 5,
+            price: "75000",
+            discount: "0",
+            subtotal: "375000",
+          },
+          {
+            productId: prodMilk.id,
+            stockId: milkStockJakarta!.id,
+            quantity: 5,
+            price: "18500",
+            discount: "0",
+            subtotal: "92500",
+          },
+        ],
+      },
+    },
+  });
 
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
