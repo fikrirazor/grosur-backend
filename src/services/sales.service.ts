@@ -5,17 +5,27 @@ import { AppError } from "../middleware/error.middleware";
  * Build date range filter for orders
  */
 const buildDateFilter = (month?: number, year?: number) => {
-  if (!month || !year) return {};
+  if (!year) return {};
 
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-  return {
-    createdAt: {
-      gte: startDate,
-      lte: endDate,
-    },
-  };
+  if (month) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    return {
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+  } else {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
+    return {
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+  }
 };
 
 /**
@@ -26,14 +36,17 @@ const calculateRevenue = (items: any[]) => {
 };
 
 /**
- * Get monthly trend data for the last 12 months
+ * Get monthly trend data for a specific year or the last 12 months
  */
-const getMonthlyTrends = async (storeId?: string) => {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setFullYear(endDate.getFullYear() - 1);
-  startDate.setDate(1);
-  startDate.setHours(0, 0, 0, 0);
+const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
+  const endDate = targetYear ? new Date(targetYear, 11, 31, 23, 59, 59) : new Date();
+  const startDate = targetYear ? new Date(targetYear, 0, 1) : new Date();
+  
+  if (!targetYear) {
+    startDate.setFullYear(endDate.getFullYear() - 1);
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+  }
 
   const where: any = {
     status: "CONFIRMED",
@@ -56,12 +69,22 @@ const getMonthlyTrends = async (storeId?: string) => {
   });
 
   const monthsMap = new Map();
-  // Initialize last 12 months
-  for (let i = 0; i < 12; i++) {
-    const d = new Date();
-    d.setMonth(endDate.getMonth() - (11 - i));
-    const label = d.toLocaleString("id-ID", { month: "short", year: "2-digit" });
-    monthsMap.set(label, { month: label, revenue: 0, orders: 0 });
+  
+  if (targetYear) {
+    // Initialize 12 months of the year
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(targetYear, i, 1);
+      const label = d.toLocaleString("id-ID", { month: "short", year: "2-digit" });
+      monthsMap.set(label, { month: label, revenue: 0, orders: 0 });
+    }
+  } else {
+    // Initialize last 12 months
+    for (let i = 0; i < 12; i++) {
+      const d = new Date();
+      d.setMonth(endDate.getMonth() - (11 - i));
+      const label = d.toLocaleString("id-ID", { month: "short", year: "2-digit" });
+      monthsMap.set(label, { month: label, revenue: 0, orders: 0 });
+    }
   }
 
   orders.forEach((order) => {
@@ -137,7 +160,7 @@ const aggregateByProduct = (orders: any[]) => {
 
       const data = productMap.get(key);
       data.quantity += item.quantity;
-      data.revenue += Number(item.totalPrice);
+      data.revenue += Number(item.subtotal);
       data.orders += 1;
     });
   });
@@ -166,7 +189,7 @@ const aggregateByCategory = (orders: any[]) => {
 
       const data = categoryMap.get(key);
       data.quantity += item.quantity;
-      data.revenue += Number(item.totalPrice);
+      data.revenue += Number(item.subtotal);
       data.products.add(item.product.id);
     });
   });
@@ -230,7 +253,7 @@ export const getSalesReport = async (
   const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
   // Get trends
-  const trends = await getMonthlyTrends(storeId);
+  const trends = await getMonthlyTrends(storeId, year);
 
   // Map to transactions for frontend
   const transactions = orders.map((o) => ({
