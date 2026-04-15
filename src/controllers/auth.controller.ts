@@ -214,6 +214,7 @@ export const googleLogin = async (req: Request, res: Response) => {
           email: user.email,
           name: user.name,
           role: user.role,
+          referralCode: user.referralCode,
           profilePicture: user.photo
         },
       },
