@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
+import cloudinary from "../config/cloudinary";
 
 /**
  * Validates stock for all items in the user's cart across all stores.
@@ -236,3 +237,121 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+/**
+ * Upload payment proof for a specific order.
+ * Validates: ownership, order status, file type (.jpg, .jpeg, .png), and max 1MB.
+ */
+export const uploadPaymentProof = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { id } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return sendResponse(res, 400, false, "File bukti pembayaran wajib diupload");
+    }
+
+    // Find the order & verify ownership
+    const order = await prisma.order.findFirst({
+      where: { id, userId },
+    });
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Pesanan tidak ditemukan");
+    }
+
+    // Check if order is still in WAITING_PAYMENT status
+    if (order.status !== "WAITING_PAYMENT") {
+      return sendResponse(res, 400, false, "Pesanan ini sudah tidak menunggu pembayaran");
+    }
+
+    // Check 1-hour payment deadline
+    const oneHourMs = 60 * 60 * 1000;
+    const elapsed = Date.now() - new Date(order.createdAt).getTime();
+    if (elapsed > oneHourMs) {
+      // Auto cancel if expired
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+          cancelledBy: "SYSTEM",
+          cancelReason: "Batas waktu pembayaran (1 jam) telah habis",
+        },
+      });
+      return sendResponse(res, 400, false, "Batas waktu pembayaran telah habis. Pesanan dibatalkan otomatis.");
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "grosur/payment-proofs",
+          resource_type: "image",
+          public_id: `payment_${order.orderNumber}_${Date.now()}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(file.buffer);
+    });
+
+    // Update order with payment proof URL and status
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentProof: uploadResult.secure_url,
+        status: "WAITING_CONFIRMATION",
+        paymentStatus: "PENDING",
+        paidAt: new Date(),
+      },
+      include: {
+        items: { include: { product: { include: { images: true } } } },
+        store: true,
+        address: true,
+      },
+    });
+
+    sendResponse(res, 200, true, "Bukti pembayaran berhasil diupload", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Auto-cancel all orders that have been in WAITING_PAYMENT for more than 1 hour.
+ * Called periodically or on-demand.
+ */
+export const cancelExpiredOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const result = await prisma.order.updateMany({
+      where: {
+        status: "WAITING_PAYMENT",
+        createdAt: { lt: oneHourAgo },
+      },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelledBy: "SYSTEM",
+        cancelReason: "Batas waktu pembayaran (1 jam) telah habis",
+      },
+    });
+
+    sendResponse(res, 200, true, `${result.count} pesanan expired telah dibatalkan`);
+  } catch (error) {
+    next(error);
+  }
+};

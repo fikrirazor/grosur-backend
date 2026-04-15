@@ -3,9 +3,12 @@ import {
   createOrder, 
   getOrders, 
   getOrderDetails,
-  validateStock
+  validateStock,
+  uploadPaymentProof,
+  cancelExpiredOrders
 } from "../controllers/order.controller";
 import { verifyToken } from "../middleware/auth.middleware";
+import { upload } from "../middleware/upload.middleware";
 
 const router = Router();
 
@@ -18,6 +21,20 @@ router.use(verifyToken);
  * @access  Private
  */
 router.get("/validate-stock", validateStock);
+
+/**
+ * @route   POST /api/orders/:id/payment-proof
+ * @desc    Upload payment proof for an order (jpg, jpeg, png only, max 1MB)
+ * @access  Private
+ */
+router.post("/:id/payment-proof", upload.single("paymentProof"), uploadPaymentProof);
+
+/**
+ * @route   POST /api/orders/cancel-expired
+ * @desc    Cancel all expired unpaid orders (older than 1 hour)
+ * @access  Private
+ */
+router.post("/cancel-expired", cancelExpiredOrders);
 
 /**
  * @route   POST /api/orders
