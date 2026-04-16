@@ -5,7 +5,8 @@ import {
   getOrderDetails,
   validateStock,
   uploadPaymentProof,
-  cancelExpiredOrders
+  cancelExpiredOrders,
+  cancelOrder
 } from "../controllers/order.controller";
 import { verifyToken } from "../middleware/auth.middleware";
 import { upload } from "../middleware/upload.middleware";
@@ -35,6 +36,13 @@ router.post("/:id/payment-proof", upload.single("paymentProof"), uploadPaymentPr
  * @access  Private
  */
 router.post("/cancel-expired", cancelExpiredOrders);
+
+/**
+ * @route   POST /api/orders/:id/cancel
+ * @desc    Cancel a specific order
+ * @access  Private
+ */
+router.post("/:id/cancel", cancelOrder);
 
 /**
  * @route   POST /api/orders
