@@ -121,6 +121,10 @@ const getPaginatedSales = async (
                 name: true,
                 categoryId: true,
                 category: { select: { name: true } },
+                images: {
+                  take: 1,
+                  select: { url: true },
+                },
               },
             },
           },
@@ -150,6 +154,7 @@ const aggregateByProduct = (orders: any[]) => {
         productMap.set(key, {
           productId: item.product.id,
           productName: item.product.name,
+          productImage: item.product.images?.[0]?.url || null,
           categoryId: item.product.categoryId,
           categoryName: item.product.category.name,
           quantity: 0,
