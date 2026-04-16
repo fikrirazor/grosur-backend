@@ -20,4 +20,20 @@ router.get(
   salesController.exportSalesReport
 );
 
+// Stock summary report - accessible by SUPER_ADMIN and STORE_ADMIN
+router.get(
+  "/stock/summary",
+  verifyToken,
+  authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
+  salesController.getStockSummary
+);
+
+// Stock detail report - accessible by SUPER_ADMIN and STORE_ADMIN
+router.get(
+  "/stock/detail",
+  verifyToken,
+  authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
+  salesController.getStockDetail
+);
+
 export default router;
