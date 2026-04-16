@@ -1,31 +1,95 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import config from "../config/env";
+import prisma from "../config/database";
+import { sendResponse } from "../utils/response.util";
 import { Role } from "@prisma/client";
 
-export const verifyToken = (
+interface JwtPayload {
+  id: string;
+  role: Role;
+}
+
+export const verifyToken = async (
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
-  // CRITICAL FIX: Check cookies FIRST, and if empty, fallback to the Authorization header
-  const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
-
-  if (!token) return res.status(401).json({ message: "Unauthorized: Token missing" });
-
+): Promise<void> => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    req.user = decoded as { id: string; role: Role };
-    return next();
+    const token = extractToken(req);
+    if (!token)
+      return sendResponse(
+        res,
+        401,
+        false,
+        "No token provided.",
+        undefined,
+        undefined,
+        "UNAUTHORIZED",
+      );
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    const user = await fetchAuthUser(decoded.id);
+
+    if (!user)
+      return sendResponse(
+        res,
+        401,
+        false,
+        "User not found.",
+        undefined,
+        undefined,
+        "UNAUTHORIZED",
+      );
+
+    (req as any).user = user;
+    next();
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    handleAuthError(res, error);
   }
+};
+
+const extractToken = (req: Request) =>
+  req.cookies?.token ||
+  req.cookies?.access_token ||
+  (req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.substring(7)
+    : null);
+
+const fetchAuthUser = async (id: string) =>
+  prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isVerified: true,
+      managedStore: true,
+    },
+  });
+
+const handleAuthError = (res: Response, error: any) => {
+  const expired = error instanceof jwt.TokenExpiredError;
+  const message = expired ? "Token expired." : "Invalid token.";
+  const code = expired ? "TOKEN_EXPIRED" : "INVALID_TOKEN";
+  sendResponse(
+    res,
+    401,
+    false,
+    `${message} Authorization denied.`,
+    undefined,
+    undefined,
+    code,
+  );
 };
 
 export const requireRole = (allowedRoles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden: Access denied" });
+    const userRole = (req as any).user?.role;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return sendResponse(res, 403, false, "Forbidden: Access denied.");
     }
-    return next();
+    next();
   };
 };

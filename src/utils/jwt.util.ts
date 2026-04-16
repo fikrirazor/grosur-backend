@@ -4,6 +4,7 @@ import config from "../config/env";
 interface TokenPayload {
   userId: string;
   email: string;
+  role: string;
 }
 
 export const generateToken = (payload: TokenPayload): string => {

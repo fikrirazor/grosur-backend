@@ -77,6 +77,7 @@ model User {
   name         String?
   phone        String?
   photo        String?
+<<<<<<< HEAD
   role         Role         @default(USER)
   isVerified   Boolean      @default(false)
   referralCode String       @unique @default(uuid())
@@ -94,6 +95,7 @@ model User {
   referrer           User?               @relation("ReferredUsers", fields: [referredBy], references: [id])
   verificationTokens VerificationToken[]
   cronJobLogs        CronJobLog[]
+  actionLogs         ActionLog[]
 
   managedStoreId String?
   managedStore   Store?  @relation(fields: [managedStoreId], references: [id])
@@ -141,7 +143,6 @@ model Address {
   // ADD THESE for RajaOngkir API calls (e.g., "5", "39")
   provinceId String?
   cityId     String?
-
   orders Order[]
 }
 
@@ -301,6 +302,7 @@ model Voucher {
   value       Decimal     @db.Decimal(10, 2)
   maxDiscount Decimal?    @db.Decimal(10, 2)
   minSpend    Decimal?    @db.Decimal(10, 2)
+  qty         Int         @default(1) // Available quantity
   expiryDate  DateTime
   isUsed      Boolean     @default(false)
   usedAt      DateTime?
@@ -428,4 +430,23 @@ model CronJobLog {
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
+}
+
+// ============================================
+// AUDIT LOGGING
+// ============================================
+
+model ActionLog {
+  id         String   @id @default(uuid())
+  action     String // e.g., "CREATE_STORE_ADMIN", "UPDATE_STORE_ADMIN"
+  targetId   String? // The ID of the record being changed
+  targetType String? // e.g., "User", "Store"
+  details    Json? // Additional information about the action
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }

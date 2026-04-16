@@ -1,12 +1,13 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { findNearestStore } from "../services/location.service";
 import jwt from "jsonwebtoken";
 import { calculateDistance } from "../utils/haversine";
+import { sendResponse } from "../utils/response.util";
 
 const MAX_RADIUS_KM = 50;
 
-// Helper 1: Calculate, Filter by 50km, and Sort (Clean Code: 6 lines)
+// Helper 1: Calculate, Filter by 50km, and Sort
 const getSortedNearbyStores = (lat: number, lng: number, stores: any[]) => {
     return stores
         .map(s => ({ ...s, distance: calculateDistance(lat, lng, s.latitude, s.longitude) }))
@@ -14,9 +15,8 @@ const getSortedNearbyStores = (lat: number, lng: number, stores: any[]) => {
         .sort((a, b) => a.distance - b.distance);
 };
 
-// Helper 2: Handle the Main Store Fallback (Clean Code: 5 lines)
+// Helper 2: Handle the Main Store Fallback
 const handleFallback = (stores: any[]) => {
-    // @ts-ignore - Assuming your DB has an 'isMain' boolean, or we just grab the first store
     const mainStore = stores.find(s => s.isMain) || stores[0];
     return {
         store: mainStore,
@@ -24,67 +24,85 @@ const handleFallback = (stores: any[]) => {
     };
 };
 
-export const getAssignedStore = async (req: Request, res: Response) => {
+export const getAssignedStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = getUserIdFromRequest(req);
-        if (!userId) return getFallbackStore(req, res); // Guest user? Give them fallback.
+        if (!userId) return getFallbackStore(req, res, next);
 
         const address = await prisma.address.findFirst({
             where: { userId, isDefault: true },
         });
         if (!address || address.latitude === null || address.longitude === null) {
-            return res.status(404).json({ message: "Address not found or location not set" });
+            return sendResponse(res, 404, false, "Address not found or location not set");
         }
 
         const nearest = await findNearestStore(address.latitude, address.longitude);
         return validateAndSendStore(res, nearest);
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const getFallbackStore = async (_req: Request, res: Response) => {
+export const getFallbackStore = async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const store = await prisma.store.findFirst({
             where: { isActive: true },
             orderBy: { createdAt: "asc" },
         });
         return store
-            ? res.status(200).json({ message: "Fallback", data: store })
-            : res.status(404).json({ message: "No active stores" });
+            ? sendResponse(res, 200, true, "Fallback store found", store)
+            : sendResponse(res, 404, false, "No active stores");
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const getNearestStore = async (req: Request, res: Response) => {
+export const getNearestStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { latitude, longitude } = req.body;
         const stores = await prisma.store.findMany();
 
-        if (!stores.length) return res.status(404).json({ message: "Data toko kosong" });
+        if (!stores.length) return sendResponse(res, 404, false, "Data toko kosong");
 
-        // Fallback AC: Triggered if user denies location permission
-        if (!latitude || !longitude) return res.status(200).json(handleFallback(stores));
+        if (!latitude || !longitude) {
+            const result = handleFallback(stores);
+            return sendResponse(res, 200, true, result.message, result.store);
+        }
 
-        // Calculate & Filter AC: Get stores within radius
         const nearby = getSortedNearbyStores(latitude, longitude, stores);
 
-        // Fallback AC: Triggered if user is too far from any store
-        if (!nearby.length) return res.status(200).json(handleFallback(stores));
+        if (!nearby.length) {
+            const result = handleFallback(stores);
+            return sendResponse(res, 200, true, result.message, result.store);
+        }
 
-        // Return the absolute closest store as the primary target
-        return res.status(200).json({ store: nearby[0], message: "Toko terdekat ditemukan" });
+        return sendResponse(res, 200, true, "Toko terdekat ditemukan", nearby[0]);
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-/* --- CLEAN CODE HELPERS (< 15 Lines) --- */
-
+export const getStores = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const stores = await prisma.store.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          city: true,
+          district: true,
+        },
+        orderBy: { name: "asc" },
+      });
+  
+      return sendResponse(res, 200, true, "Stores fetched successfully", stores);
+    } catch (error) {
+      next(error);
+    }
+};
 
 const getUserIdFromRequest = (req: Request): string | null => {
-    const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    const token = req.cookies?.token || req.cookies?.access_token || req.headers.authorization?.split(" ")[1];
     if (!token) return null;
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
@@ -95,84 +113,78 @@ const getUserIdFromRequest = (req: Request): string | null => {
 };
 
 const validateAndSendStore = (res: Response, store: any) => {
-    if (!store) return res.status(404).json({ message: "No stores in area" });
+    if (!store) return sendResponse(res, 404, false, "No stores in area");
 
     if (store.distance > store.maxRadius) {
-        return res.status(400).json({
-            message: "Outside delivery range",
+        return sendResponse(res, 400, false, "Outside delivery range", {
             distance: `${store.distance.toFixed(2)} km`
         });
     }
 
-    return res.status(200).json({ data: store });
+    return sendResponse(res, 200, true, "Store found", store);
 };
 
-// ==========================================
-// EPIC 1.5: SUPER ADMIN STORE CRUD
-// ==========================================
+// --- Super Admin CRUD ---
 
-export const createStore = async (req: Request, res: Response) => {
+export const createStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newStore = await prisma.store.create({ data: req.body });
-        return res.status(201).json({ message: "Cabang berhasil dibuat", data: newStore });
+        return sendResponse(res, 201, true, "Cabang berhasil dibuat", newStore);
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const getAllStores = async (_req: Request, res: Response) => {
+export const getAllStores = async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const stores = await prisma.store.findMany({
             orderBy: { createdAt: "desc" }
         });
-        return res.status(200).json({ data: stores });
+        return sendResponse(res, 200, true, "All stores fetched", stores);
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const updateStore = async (req: Request, res: Response) => {
+export const updateStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const updated = await prisma.store.update({
             where: { id: req.params.id },
             data: req.body
         });
-        return res.status(200).json({ message: "Cabang berhasil diperbarui", data: updated });
+        return sendResponse(res, 200, true, "Cabang berhasil diperbarui", updated);
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const deleteStore = async (req: Request, res: Response) => {
+export const deleteStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         await prisma.store.delete({ where: { id: req.params.id } });
-        return res.status(200).json({ message: "Cabang berhasil dihapus" });
+        return sendResponse(res, 200, true, "Cabang berhasil dihapus");
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-export const assignStoreAdmin = async (req: Request, res: Response) => {
+export const assignStoreAdmin = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const storeId = req.params.id;
         const { userId } = req.body;
 
         await executeAssignAdmin(userId, storeId);
-        return res.status(200).json({ message: "Admin berhasil ditugaskan ke cabang ini" });
+        return sendResponse(res, 200, true, "Admin berhasil ditugaskan ke cabang ini");
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 };
 
-// --- CLEAN CODE HELPER (< 15 Lines) ---
 const executeAssignAdmin = async (userId: string, storeId: string) => {
     return await prisma.$transaction([
-        // Step 1: Remove any existing admin from this store (Demote to standard USER)
         prisma.user.updateMany({
             where: { managedStoreId: storeId },
             data: { managedStoreId: null, role: "USER" }
         }),
-        // Step 2: Promote the new user to STORE_ADMIN and link to this store
         prisma.user.update({
             where: { id: userId },
             data: { managedStoreId: storeId, role: "STORE_ADMIN" }

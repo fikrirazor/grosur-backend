@@ -3,10 +3,26 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../config/database";
 import crypto from "crypto";
+import { AppError } from "../middlewares/error.middleware";
+import { generateToken } from "../utils/jwt.util";
+import { hashPassword, comparePassword } from "../utils/password.util";
+
+const USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  managedStore: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+// --- Helper Functions ---
 
 export const findUserByEmail = async (email: string) => {
   return await prisma.user.findUnique({
     where: { email },
+    include: { managedStore: true },
   });
 };
 
@@ -17,8 +33,55 @@ export const findUserByReferralCode = async (referralCode: string) => {
 };
 
 export const verifyPassword = async (plain: string, hashed: string) => {
-  return await bcrypt.compare(plain, hashed);
+  return await comparePassword(plain, hashed);
 };
+
+// --- Structured Auth Functions (from develop) ---
+
+export const registerUser = async (data: any) => {
+  const { name, email, password } = data;
+  if (await findUserByEmail(email)) {
+    throw new AppError(409, "User with this email already exists");
+  }
+  const newUser = await createUserAccount(name, email, password);
+  return formatAuthResponse(newUser);
+};
+
+export const loginUser = async (data: any) => {
+  const user = await validateCredentials(data.email, data.password);
+  return formatAuthResponse(user);
+};
+
+export const createUserAccount = async (name: string, email: string, pass: string) => {
+  const hashedPassword = await hashPassword(pass);
+  return await prisma.user.create({
+    data: { name, email, password: hashedPassword, role: "USER" },
+    select: USER_SELECT,
+  });
+};
+
+export const validateCredentials = async (email: string, pass: string) => {
+  const user = await findUserByEmail(email);
+  if (
+    !user ||
+    !user.password ||
+    !(await comparePassword(pass, user.password))
+  ) {
+    throw new AppError(401, "Invalid email or password");
+  }
+  return user;
+};
+
+export const formatAuthResponse = (user: any) => {
+  const token = generateToken({
+    id: user.id,
+    role: user.role,
+  });
+  const { password: _, ...userWithoutPassword } = user;
+  return { user: userWithoutPassword, token };
+};
+
+// --- Referral & Verification Functions (from feat/referral-code) ---
 
 export const generateAuthToken = (userId: string, role: string) => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, { expiresIn: "1d" });
@@ -29,9 +92,8 @@ export const createUnverifiedUser = async (email: string, referredBy?: string) =
     data: {
       email,
       isVerified: false,
-      role: "USER", // Explicitly set to ensure no one registers as ADMIN
+      role: "USER",
       referredBy: referredBy || null,
-      // referralCode is @default(uuid()), so Prisma handles that automatically!
     }
   });
 };
@@ -47,8 +109,6 @@ export const createVerifyToken = async (userId: string, token: string) => {
     data: { userId, token: hashedToken, type: "EMAIL_VERIFY", expiresAt },
   });
 };
-
-// Add these to src/services/auth.service.ts
 
 export const validateVerificationToken = async (
   userId: string,
@@ -79,8 +139,6 @@ export const verifyUserAndSetPassword = async (
     }),
   ]);
 };
-
-// Add these to src/services/auth.service.ts
 
 export const createResetToken = async (userId: string, token: string) => {
   const hashedToken = await bcrypt.hash(token, 10);

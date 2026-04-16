@@ -15,6 +15,7 @@ const envSchema = z.object({
   CLOUDINARY_URL: z.string().url().startsWith("cloudinary://"),
   RAJAONGKIR_API_KEY: z.string().min(1, "RAJAONGKIR_API_KEY is required"),
   OPENCAGE_API_KEY: z.string().min(1, "OPENCAGE_API_KEY is required"),
+  CORS_ORIGIN: z.string().default("*"),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -37,6 +38,7 @@ export const config = {
   jwt: {
     secret: env.JWT_SECRET,
     expiresIn: env.JWT_EXPIRES_IN,
+    corsOrigin: env.CORS_ORIGIN,
   },
   cloudinary: {
     url: env.CLOUDINARY_URL,
@@ -47,6 +49,7 @@ export const config = {
   openCage: {
     apiKey: env.OPENCAGE_API_KEY,
   },
+  corsOrigin: env.CORS_ORIGIN,
 } as const;
 
 export default config;

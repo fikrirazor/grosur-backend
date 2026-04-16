@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import pino from "pino-http";
 import logger from "./utils/logger.util";
+import config from "./config/env";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 
@@ -19,7 +20,7 @@ app.use(pino({ logger }));
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: config.jwt.corsOrigin || process.env.CORS_ORIGIN || "http://localhost:3000",
     credentials: true,
   }),
 );
@@ -35,7 +36,7 @@ app.use("/api", routes);
 app.get("/", (_req, res) => {
   res.status(200).json({
     success: true,
-    message: "Welcome to the API",
+    message: "Welcome to the GroSur API",
     version: "1.0.0",
   });
 });
