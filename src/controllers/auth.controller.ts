@@ -10,6 +10,7 @@ import prisma from "../config/database";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 import {
   findUserByEmail,
+  findUserByReferralCode,
   verifyPassword,
   generateAuthToken,
   createUnverifiedUser,
@@ -76,14 +77,21 @@ const sendTokenResponse = (res: Response, token: string, user: any) => {
 
 export const registerHandler = async (req: Request, res: Response) => {
   try {
-    const { email, referredBy } = req.body;
+    const { email, referredBy: referralCode } = req.body;
     let user = await findUserByEmail(email);
 
     if (user && user.isVerified) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    if (!user) user = await createUnverifiedUser(email, referredBy);
+    if (!user) {
+      let referrerId = undefined;
+      if (referralCode) {
+        const referrer = await findUserByReferralCode(referralCode);
+        referrerId = referrer?.id;
+      }
+      user = await createUnverifiedUser(email, referrerId);
+    }
 
     const token = generateRandomToken();
 
@@ -180,12 +188,20 @@ export const googleLogin = async (req: Request, res: Response) => {
     if (!user) {
       // 3. If not, create a new user. 
       // Note: Social logins are automatically considered "verified" 
+      const { referredBy: referralCode } = req.body;
+      let referrerId = undefined;
+      if (referralCode) {
+        const referrer = await findUserByReferralCode(referralCode);
+        referrerId = referrer?.id;
+      }
+
       user = await prisma.user.create({
         data: {
           email,
           name: name || "Google User",
           isVerified: true,
           role: "USER",
+          referredBy: referrerId,
           // You might want to add a 'profilePicture' field to your Prisma schema later to save 'picture'
         },
       });

@@ -10,6 +10,12 @@ export const findUserByEmail = async (email: string) => {
   });
 };
 
+export const findUserByReferralCode = async (referralCode: string) => {
+  return await prisma.user.findUnique({
+    where: { referralCode },
+  });
+};
+
 export const verifyPassword = async (plain: string, hashed: string) => {
   return await bcrypt.compare(plain, hashed);
 };
