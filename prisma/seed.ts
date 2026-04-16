@@ -120,7 +120,7 @@ async function main() {
       categoryId: catSembako.id,
       isActive: true,
       images: {
-        create: { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=400' }
+        create: { url: 'https://image.astronauts.cloud/product-images/2024/12/JivaBerasPremium5kg_5e349be7-3097-4ca3-bb85-5cc5e0437c75_900x900.jpg' }
       }
     },
   });
@@ -136,7 +136,7 @@ async function main() {
       categoryId: catFresh.id,
       isActive: true,
       images: {
-        create: { url: 'https://images.unsplash.com/photo-1563636619-e9107da5a76a?auto=format&fit=crop&q=80&w=400' }
+        create: { url: 'https://www.jni.co.id/cdn/shop/products/b1d42094-90a1-42a2-bf81-b183d95a2243-fullcream-946ml.jpg?v=1738552499' }
       }
     },
   });
@@ -152,7 +152,7 @@ async function main() {
       categoryId: catFresh.id,
       isActive: true,
       images: {
-        create: { url: 'https://images.unsplash.com/photo-1582722872445-44355050985c?auto=format&fit=crop&q=80&w=400' }
+        create: { url: 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//94/MTA-21123796/supernova_mart_supernova_mart_telur_ayam_negeri_-10_pcs-_full02_bdw4tyso.jpg' }
       }
     },
   });
@@ -169,7 +169,7 @@ async function main() {
       categoryId: catSembako.id,
       isActive: true,
       images: {
-        create: { url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=400' }
+        create: { url: 'https://down-id.img.susercontent.com/file/sg-11134201-22110-sah56w6uldjv17' }
       }
     },
   });
@@ -186,7 +186,7 @@ async function main() {
       categoryId: catSembako.id,
       isActive: true,
       images: {
-        create: { url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&q=80&w=400' }
+        create: { url: 'https://image.astronauts.cloud/product-images/2025/6/SusGulaPasirLokal1kg_299edd6a-0919-45fc-9f18-6ea257238cb5_900x900.jpg' }
       }
     },
   });
@@ -503,9 +503,9 @@ async function main() {
       shippingCost: "10000",
       discountAmount: "0",
       totalAmount: "250500",
-      createdAt: new Date("2024-01-15T10:30:00Z"),
-      paidAt: new Date("2024-01-15T10:35:00Z"),
-      confirmedAt: new Date("2024-01-15T11:00:00Z"),
+      createdAt: new Date("2026-01-15T10:30:00Z"),
+      paidAt: new Date("2026-01-15T10:35:00Z"),
+      confirmedAt: new Date("2026-01-15T11:00:00Z"),
       items: {
         create: [
           {
@@ -550,9 +550,9 @@ async function main() {
       shippingCost: "10000",
       discountAmount: "15000",
       totalAmount: "145000",
-      createdAt: new Date("2024-01-20T14:15:00Z"),
-      paidAt: new Date("2024-01-20T14:20:00Z"),
-      confirmedAt: new Date("2024-01-20T15:00:00Z"),
+      createdAt: new Date("2026-01-20T14:15:00Z"),
+      paidAt: new Date("2026-01-20T14:20:00Z"),
+      confirmedAt: new Date("2026-01-20T15:00:00Z"),
       items: {
         create: [
           {
@@ -589,9 +589,9 @@ async function main() {
       shippingCost: "12000",
       discountAmount: "0",
       totalAmount: "197000",
-      createdAt: new Date("2024-01-18T09:45:00Z"),
-      paidAt: new Date("2024-01-18T09:50:00Z"),
-      confirmedAt: new Date("2024-01-18T10:30:00Z"),
+      createdAt: new Date("2026-01-18T09:45:00Z"),
+      paidAt: new Date("2026-01-18T09:50:00Z"),
+      confirmedAt: new Date("2026-01-18T10:30:00Z"),
       items: {
         create: [
           {
@@ -620,9 +620,9 @@ async function main() {
       shippingCost: "10000",
       discountAmount: "30000",
       totalAmount: "280000",
-      createdAt: new Date("2024-02-10T16:20:00Z"),
-      paidAt: new Date("2024-02-10T16:25:00Z"),
-      confirmedAt: new Date("2024-02-10T17:00:00Z"),
+      createdAt: new Date("2026-02-10T16:20:00Z"),
+      paidAt: new Date("2026-02-10T16:25:00Z"),
+      confirmedAt: new Date("2026-02-10T17:00:00Z"),
       items: {
         create: [
           {
@@ -651,9 +651,9 @@ async function main() {
       shippingCost: "15000",
       discountAmount: "0",
       totalAmount: "140000",
-      createdAt: new Date("2024-01-25T11:00:00Z"),
-      paidAt: new Date("2024-01-25T11:05:00Z"),
-      confirmedAt: new Date("2024-01-25T12:00:00Z"),
+      createdAt: new Date("2026-01-25T11:00:00Z"),
+      paidAt: new Date("2026-01-25T11:05:00Z"),
+      confirmedAt: new Date("2026-01-25T12:00:00Z"),
       items: {
         create: [
           {
@@ -682,7 +682,7 @@ async function main() {
       shippingCost: "10000",
       discountAmount: "0",
       totalAmount: "477500",
-      createdAt: new Date("2024-01-28T08:00:00Z"),
+      createdAt: new Date("2026-01-28T08:00:00Z"),
       items: {
         create: [
           {
@@ -719,9 +719,9 @@ async function main() {
       shippingCost: "10000",
       discountAmount: "0",
       totalAmount: "102500",
-      createdAt: new Date("2024-03-05T13:30:00Z"),
-      paidAt: new Date("2024-03-05T13:35:00Z"),
-      confirmedAt: new Date("2024-03-05T14:00:00Z"),
+      createdAt: new Date("2026-03-05T13:30:00Z"),
+      paidAt: new Date("2026-03-05T13:35:00Z"),
+      confirmedAt: new Date("2026-03-05T14:00:00Z"),
       items: {
         create: [
           {
@@ -750,9 +750,9 @@ async function main() {
       shippingCost: "12000",
       discountAmount: "0",
       totalAmount: "124500",
-      createdAt: new Date("2024-03-10T10:15:00Z"),
-      paidAt: new Date("2024-03-10T10:20:00Z"),
-      confirmedAt: new Date("2024-03-10T11:00:00Z"),
+      createdAt: new Date("2026-03-10T10:15:00Z"),
+      paidAt: new Date("2026-03-10T10:20:00Z"),
+      confirmedAt: new Date("2026-03-10T11:00:00Z"),
       items: {
         create: [
           {
@@ -789,9 +789,9 @@ async function main() {
       shippingCost: "15000",
       discountAmount: "0",
       totalAmount: "175000",
-      createdAt: new Date("2024-01-30T15:45:00Z"),
-      paidAt: new Date("2024-01-30T15:50:00Z"),
-      confirmedAt: new Date("2024-01-30T16:30:00Z"),
+      createdAt: new Date("2026-01-30T15:45:00Z"),
+      paidAt: new Date("2026-01-30T15:50:00Z"),
+      confirmedAt: new Date("2026-01-30T16:30:00Z"),
       items: {
         create: [
           {
@@ -836,9 +836,9 @@ async function main() {
       shippingCost: "12000",
       discountAmount: "20000",
       totalAmount: "202000",
-      createdAt: new Date("2024-02-15T09:00:00Z"),
-      paidAt: new Date("2024-02-15T09:05:00Z"),
-      confirmedAt: new Date("2024-02-15T10:00:00Z"),
+      createdAt: new Date("2026-02-15T09:00:00Z"),
+      paidAt: new Date("2026-02-15T09:05:00Z"),
+      confirmedAt: new Date("2026-02-15T10:00:00Z"),
       items: {
         create: [
           {
