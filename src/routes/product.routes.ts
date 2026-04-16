@@ -15,11 +15,11 @@ router.get("/", productController.getPublicProducts);
 router.get("/categories", productController.getCategories);
 router.get("/:productId", productController.getPublicProductDetail);
 
-// Protected routes for Store Admins
+// Protected routes for Super Admins (Store Admins are Read-Only for Products)
 router.post(
   "/",
   verifyToken,
-  authorizeRoles("STORE_ADMIN", "SUPER_ADMIN"),
+  authorizeRoles("SUPER_ADMIN"),
   validateRequest(createProductSchema),
   productController.createProduct,
 );
@@ -27,7 +27,7 @@ router.post(
 router.put(
   "/:productId",
   verifyToken,
-  authorizeRoles("STORE_ADMIN", "SUPER_ADMIN"),
+  authorizeRoles("SUPER_ADMIN"),
   validateRequest(updateProductSchema),
   productController.updateProduct,
 );
@@ -35,14 +35,14 @@ router.put(
 router.delete(
   "/:productId",
   verifyToken,
-  authorizeRoles("STORE_ADMIN", "SUPER_ADMIN"),
+  authorizeRoles("SUPER_ADMIN"),
   productController.deleteProduct,
 );
 
 router.post(
   "/upload-images",
   verifyToken,
-  authorizeRoles("STORE_ADMIN", "SUPER_ADMIN"),
+  authorizeRoles("SUPER_ADMIN"),
   upload.array("images", 5), // Max 5 images per upload
   productController.uploadProductImages,
 );
