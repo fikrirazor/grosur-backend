@@ -87,9 +87,11 @@ const handleAuthError = (res: Response, error: any) => {
 export const requireRole = (allowedRoles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const userRole = (req as any).user?.role;
-    if (!userRole || !allowedRoles.includes(userRole)) {
+    if (!userRole || !allowedRoles.includes(userRole as Role)) {
       return sendResponse(res, 403, false, "Forbidden: Access denied.");
     }
     next();
   };
 };
+
+export const authorizeRoles = (...roles: string[]) => requireRole(roles as Role[]);

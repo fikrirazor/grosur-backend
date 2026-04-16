@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as categoryController from "../controllers/category.controller";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
-import { validateRequest } from "../middleware/validation.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
+import { validateRequest } from "../middlewares/validation.middleware";
 import {
   createCategorySchema,
   updateCategorySchema,

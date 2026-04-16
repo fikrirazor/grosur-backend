@@ -1,12 +1,12 @@
 import { Router } from "express";
 import * as productController from "../controllers/product.controller";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
-import { validateRequest } from "../middleware/validation.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
+import { validateRequest } from "../middlewares/validation.middleware";
 import {
   createProductSchema,
   updateProductSchema,
 } from "../validations/product.validation";
-import { upload } from "../middleware/upload.middleware";
+import { upload } from "../middlewares/upload.middleware";
 
 const router = Router();
 

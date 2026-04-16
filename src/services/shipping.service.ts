@@ -70,4 +70,4 @@ export const fetchCities = async (provinceId?: string) => {
         console.error("RAJAONGKIR_CITIES_ERROR:", errorData);
         throw new Error("Failed to fetch cities from shipping service");
     }
-};
+};

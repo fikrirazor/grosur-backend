@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as voucherController from "../controllers/voucher.controller";
-import { verifyToken } from "../middleware/auth.middleware";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 

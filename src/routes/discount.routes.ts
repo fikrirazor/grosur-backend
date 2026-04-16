@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as discountController from "../controllers/discount.controller";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
-import { validateRequest } from "../middleware/validation.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
+import { validateRequest } from "../middlewares/validation.middleware";
 import { createDiscountSchema, updateDiscountSchema } from "../validations/discount.validation";
 
 const router = Router();
