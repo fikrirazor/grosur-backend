@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import * as voucherService from "../services/voucher.service";
+import { getReferralInvitees } from "../services/voucher.service";
 
 export const validateVoucher = async (
   req: Request,
@@ -100,6 +101,43 @@ export const claimVoucher = async (
       success: true,
       message: "Voucher berhasil diklaim",
       data: voucher,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyReferralInvitees = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const invitees = await getReferralInvitees(userId);
+
+    // Also fetch this user's own vouchers for the referral panel
+    const myVouchers = await prisma.voucher.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        code: true,
+        type: true,
+        value: true,
+        isUsed: true,
+        usedAt: true,
+        expiryDate: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        invitees,
+        vouchers: myVouchers,
+      },
     });
   } catch (error) {
     next(error);

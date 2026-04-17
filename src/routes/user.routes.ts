@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { updateProfile, requestEmailChange } from "../controllers/user.controller";
+import { updateProfile, requestEmailChange, updatePassword } from "../controllers/user.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
 import { upload } from "../middlewares/upload.middleware";
 
@@ -15,5 +15,8 @@ router.patch(
 
 // POST route for changing the email (requires authentication)
 router.post("/change-email", verifyToken, requestEmailChange);
+
+// PATCH route for changing the password (requires authentication)
+router.patch("/password", verifyToken, updatePassword);
 
 export default router;

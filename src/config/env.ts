@@ -16,6 +16,7 @@ const envSchema = z.object({
   RAJAONGKIR_API_KEY: z.string().min(1, "RAJAONGKIR_API_KEY is required"),
   OPENCAGE_API_KEY: z.string().min(1, "OPENCAGE_API_KEY is required"),
   CORS_ORIGIN: z.string().default("*"),
+  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -48,6 +49,9 @@ export const config = {
   },
   openCage: {
     apiKey: env.OPENCAGE_API_KEY,
+  },
+  google: {
+    clientId: env.GOOGLE_CLIENT_ID,
   },
   corsOrigin: env.CORS_ORIGIN,
 } as const;

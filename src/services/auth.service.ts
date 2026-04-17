@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { AppError } from "../middlewares/error.middleware";
 import { generateToken } from "../utils/jwt.util";
 import { hashPassword, comparePassword } from "../utils/password.util";
+import { generateFriendlyReferralCode } from "../utils/referral.util";
 
 const USER_SELECT = {
   id: true,
@@ -54,8 +55,9 @@ export const loginUser = async (data: any) => {
 
 export const createUserAccount = async (name: string, email: string, pass: string) => {
   const hashedPassword = await hashPassword(pass);
+  const referralCode = await generateFriendlyReferralCode(name || email);
   return await prisma.user.create({
-    data: { name, email, password: hashedPassword, role: "USER" },
+    data: { name, email, password: hashedPassword, role: "USER", referralCode },
     select: USER_SELECT,
   });
 };
@@ -88,12 +90,14 @@ export const generateAuthToken = (userId: string, role: string) => {
 };
 
 export const createUnverifiedUser = async (email: string, referredBy?: string) => {
+  const referralCode = await generateFriendlyReferralCode(email);
   return await prisma.user.create({
     data: {
       email,
       isVerified: false,
       role: "USER",
       referredBy: referredBy || null,
+      referralCode,
     }
   });
 };
@@ -102,11 +106,18 @@ export const generateRandomToken = () => {
   return crypto.randomBytes(32).toString("hex");
 };
 
+// SHA-256 hash of a token — deterministic (correct for tokens, not passwords)
+const sha256 = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
 export const createVerifyToken = async (userId: string, token: string) => {
-  const hashedToken = await bcrypt.hash(token, 10);
+  // Delete any existing unused verification tokens for this user first
+  await prisma.verificationToken.deleteMany({
+    where: { userId, type: "EMAIL_VERIFY", isUsed: false },
+  });
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
   return await prisma.verificationToken.create({
-    data: { userId, token: hashedToken, type: "EMAIL_VERIFY", expiresAt },
+    data: { userId, token: sha256(token), type: "EMAIL_VERIFY", expiresAt },
   });
 };
 
@@ -114,13 +125,12 @@ export const validateVerificationToken = async (
   userId: string,
   rawToken: string,
 ) => {
+  // Find by exact SHA-256 hash — no bcrypt ambiguity
   const dbToken = await prisma.verificationToken.findFirst({
-    where: { userId, type: "EMAIL_VERIFY", isUsed: false },
+    where: { userId, type: "EMAIL_VERIFY", isUsed: false, token: sha256(rawToken) },
   });
   if (!dbToken || dbToken.expiresAt < new Date()) return null;
-
-  const isValid = await bcrypt.compare(rawToken, dbToken.token);
-  return isValid ? dbToken : null;
+  return dbToken;
 };
 
 export const verifyUserAndSetPassword = async (
@@ -141,21 +151,22 @@ export const verifyUserAndSetPassword = async (
 };
 
 export const createResetToken = async (userId: string, token: string) => {
-  const hashedToken = await bcrypt.hash(token, 10);
+  // Delete old reset tokens first
+  await prisma.verificationToken.deleteMany({
+    where: { userId, type: "RESET_PASSWORD", isUsed: false },
+  });
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
   return await prisma.verificationToken.create({
-    data: { userId, token: hashedToken, type: "RESET_PASSWORD", expiresAt },
+    data: { userId, token: sha256(token), type: "RESET_PASSWORD", expiresAt },
   });
 };
 
 export const validateResetToken = async (userId: string, rawToken: string) => {
   const dbToken = await prisma.verificationToken.findFirst({
-    where: { userId, type: "RESET_PASSWORD", isUsed: false },
+    where: { userId, type: "RESET_PASSWORD", isUsed: false, token: sha256(rawToken) },
   });
   if (!dbToken || dbToken.expiresAt < new Date()) return null;
-
-  const isValid = await bcrypt.compare(rawToken, dbToken.token);
-  return isValid ? dbToken : null;
+  return dbToken;
 };
 
 export const updatePasswordAndUseToken = async (

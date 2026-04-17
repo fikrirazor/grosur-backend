@@ -66,6 +66,9 @@ const fetchAuthUser = async (id: string) =>
       role: true,
       isVerified: true,
       managedStore: true,
+      phone: true,
+      photo: true,
+      referralCode: true,
     },
   });
 

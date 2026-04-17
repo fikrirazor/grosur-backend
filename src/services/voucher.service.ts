@@ -198,3 +198,68 @@ export const claimVoucher = async (userId: string, payload: any) => {
   return voucher;
 };
 
+/**
+ * Issue referral vouchers to both the inviter and the new user.
+ * Called after a new user is successfully created with a referredBy field.
+ */
+export const issueReferralVouchers = async (
+  newUserId: string,
+  referrerId: string
+) => {
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + 30); // 30-day expiry
+
+  const now = Date.now();
+
+  await prisma.voucher.createMany({
+    data: [
+      // Inviter gets Rp 50.000
+      {
+        userId: referrerId,
+        code: `REF-INVITER-${referrerId.substring(0, 8).toUpperCase()}-${now}`,
+        type: "TOTAL",
+        value: 50000,
+        qty: 1,
+        isUsed: false,
+        expiryDate,
+      },
+      // New user gets Rp 25.000 welcome bonus
+      {
+        userId: newUserId,
+        code: `REF-WELCOME-${newUserId.substring(0, 8).toUpperCase()}-${now}`,
+        type: "TOTAL",
+        value: 25000,
+        qty: 1,
+        isUsed: false,
+        expiryDate,
+      },
+    ],
+  });
+};
+
+/**
+ * Get list of all users referred by this user, along with their voucher status.
+ */
+export const getReferralInvitees = async (referrerId: string) => {
+  const referrer = await prisma.user.findUnique({
+    where: { id: referrerId },
+    select: { referralCode: true },
+  });
+
+  if (!referrer) return [];
+
+  const invitees = await prisma.user.findMany({
+    where: { referredBy: referrerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return invitees;
+};
+
+
