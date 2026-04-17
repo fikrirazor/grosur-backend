@@ -226,11 +226,22 @@ export const getOrderDetails = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.id;
+    const user = (req as any).user;
     const { id } = req.params;
 
+    const where: any = { id };
+    
+    if (user.role === "USER") {
+      where.userId = user.id;
+    } else if (user.role === "STORE_ADMIN") {
+      if (!user.managedStoreId) {
+        return sendResponse(res, 403, false, "You are not assigned to any store");
+      }
+      where.storeId = user.managedStoreId;
+    }
+
     const order = await prisma.order.findFirst({
-      where: { id, userId },
+      where,
       include: {
         store: true,
         address: true,

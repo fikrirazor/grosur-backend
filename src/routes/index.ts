@@ -9,6 +9,7 @@ import cartRoutes from "./cart.routes";
 import shippingRoutes from "./shipping.routes";
 import addressRoutes from "./address.routes";
 import orderRoutes from "./order.routes";
+import adminOrderRoutes from "./admin.order.routes";
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use("/cart", cartRoutes);
 router.use("/shipping", shippingRoutes);
 router.use("/addresses", addressRoutes);
 router.use("/orders", orderRoutes);
+router.use("/admin/orders", adminOrderRoutes);
 
 export default router;
