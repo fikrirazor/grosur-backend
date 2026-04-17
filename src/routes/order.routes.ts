@@ -6,7 +6,9 @@ import {
   validateStock,
   uploadPaymentProof,
   cancelExpiredOrders,
-  cancelOrder
+  cancelOrder,
+  confirmOrderReceipt,
+  autoConfirmShippedOrders
 } from "../controllers/order.controller";
 import { verifyToken } from "../middleware/auth.middleware";
 import { upload } from "../middleware/upload.middleware";
@@ -43,6 +45,20 @@ router.post("/cancel-expired", cancelExpiredOrders);
  * @access  Private
  */
 router.post("/:id/cancel", cancelOrder);
+
+/**
+ * @route   POST /api/orders/:id/confirm
+ * @desc    Confirm receipt of a specific order
+ * @access  Private
+ */
+router.post("/:id/confirm", confirmOrderReceipt);
+
+/**
+ * @route   POST /api/orders/auto-confirm
+ * @desc    Auto-confirm all shipped orders (older than 48 hours)
+ * @access  Private
+ */
+router.post("/auto-confirm", autoConfirmShippedOrders);
 
 /**
  * @route   POST /api/orders
