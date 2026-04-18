@@ -1,15 +1,14 @@
 import { Router } from "express";
-import { getAdminOrders } from "../controllers/admin.order.controller";
+import { getAdminOrders, getAdminOrderDetail, confirmPayment } from "../controllers/admin.order.controller";
 import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
 
 const router = Router();
 
 // Routes for both SUPER_ADMIN and STORE_ADMIN
-router.get(
-  "/",
-  verifyToken,
-  authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
-  getAdminOrders
-);
+router.use(verifyToken, authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"));
+
+router.get("/", getAdminOrders);
+router.get("/:id", getAdminOrderDetail);
+router.patch("/:id/payment", confirmPayment);
 
 export default router;

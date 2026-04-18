@@ -43,15 +43,15 @@ export const getAdminOrders = async (
       ];
     }
     if (date) {
-        const selectedDate = new Date(String(date));
-        if (!isNaN(selectedDate.getTime())) {
-          const nextDate = new Date(selectedDate);
-          nextDate.setDate(selectedDate.getDate() + 1);
-          where.createdAt = {
-            gte: selectedDate,
-            lt: nextDate,
-          };
-        }
+      const selectedDate = new Date(String(date));
+      if (!isNaN(selectedDate.getTime())) {
+        const nextDate = new Date(selectedDate);
+        nextDate.setDate(selectedDate.getDate() + 1);
+        where.createdAt = {
+          gte: selectedDate,
+          lt: nextDate,
+        };
+      }
     }
 
     // 3. Fetch orders
@@ -76,6 +76,111 @@ export const getAdminOrders = async (
       totalPage: Math.ceil(total / Number(limit)),
       totalRows: total,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get single order detail for admin.
+ */
+export const getAdminOrderDetail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userMiddleware = (req as any).user;
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, email: true } },
+        store: { select: { name: true } },
+        items: { include: { product: { select: { name: true, images: true } } } },
+        address: true,
+      },
+    });
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Order not found");
+    }
+
+    // Role-based access control
+    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
+      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    }
+
+    sendResponse(res, 200, true, "Order detail retrieved successfully", order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Confirm or reject payment for an order.
+ */
+export const confirmPayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userMiddleware = (req as any).user;
+    const { id } = req.params;
+    const { action } = req.body; // 'accept' or 'reject'
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+    });
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Order not found");
+    }
+
+    if (order.status !== "WAITING_CONFIRMATION") {
+      return sendResponse(res, 400, false, "Order is not waiting for confirmation");
+    }
+
+    // Role-based access control
+    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
+      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    }
+
+    let newStatus: any;
+    let paymentStatus: any;
+    let updateData: any = {};
+
+    if (action === "accept") {
+      newStatus = "PROCESSED";
+      paymentStatus = "PAID";
+      updateData = {
+        status: newStatus,
+        paymentStatus: paymentStatus,
+        paidAt: new Date(),
+      };
+    } else if (action === "reject") {
+      newStatus = "WAITING_PAYMENT";
+      paymentStatus = "REJECTED";
+      updateData = {
+        status: newStatus,
+        paymentStatus: paymentStatus,
+        paymentProof: null, // Clear proof so user can re-upload
+      };
+    } else {
+      return sendResponse(res, 400, false, "Invalid action. Use 'accept' or 'reject'");
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: updateData,
+      include: {
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    sendResponse(res, 200, true, `Payment ${action === "accept" ? "accepted" : "rejected"} successfully`, updatedOrder);
   } catch (error) {
     next(error);
   }
