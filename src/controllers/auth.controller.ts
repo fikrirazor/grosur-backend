@@ -98,7 +98,8 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
         name: user.name,
         phone: user.phone,
         profilePicture: user.photo,
-        referralCode: user.referralCode
+        referralCode: user.referralCode,
+        isVerified: user.isVerified
       },
       token
     });
@@ -116,7 +117,12 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
     };
     delete formattedUser.photo;
 
-    return sendResponse(res, 200, true, "User profile fetched", { user: formattedUser });
+    return sendResponse(res, 200, true, "User profile fetched", { 
+      user: {
+        ...formattedUser,
+        isVerified: user.isVerified
+      } 
+    });
   } catch (error) {
     next(error);
   }
@@ -238,6 +244,12 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
           console.error("⚠️ Failed to issue referral vouchers (Google):", e);
         }
       }
+    } else if (!user.isVerified) {
+      // If user exists but is not verified, verify them since they logged in via Google
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { isVerified: true }
+      });
     }
 
     const token = generateAuthToken(user.id, user.role);
@@ -262,7 +274,8 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
         phone: user.phone,
         role: user.role,
         referralCode: user.referralCode,
-        profilePicture: user.photo
+        profilePicture: user.photo,
+        isVerified: user.isVerified
       },
       token
     });
