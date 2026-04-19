@@ -12,7 +12,11 @@ const envSchema = z.object({
   DIRECT_URL: z.string().min(1, "DIRECT_URL is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
+  CLOUDINARY_URL: z.string().url().startsWith("cloudinary://"),
+  RAJAONGKIR_API_KEY: z.string().min(1, "RAJAONGKIR_API_KEY is required"),
+  OPENCAGE_API_KEY: z.string().min(1, "OPENCAGE_API_KEY is required"),
   CORS_ORIGIN: z.string().default("*"),
+  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -35,6 +39,19 @@ export const config = {
   jwt: {
     secret: env.JWT_SECRET,
     expiresIn: env.JWT_EXPIRES_IN,
+    corsOrigin: env.CORS_ORIGIN,
+  },
+  cloudinary: {
+    url: env.CLOUDINARY_URL,
+  },
+  rajaOngkir: {
+    apiKey: env.RAJAONGKIR_API_KEY,
+  },
+  openCage: {
+    apiKey: env.OPENCAGE_API_KEY,
+  },
+  google: {
+    clientId: env.GOOGLE_CLIENT_ID,
   },
   corsOrigin: env.CORS_ORIGIN,
 } as const;

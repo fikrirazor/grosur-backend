@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middlewares/error.middleware";
 import cloudinary from "../config/cloudinary.config";
 
 export interface ProductQuery {

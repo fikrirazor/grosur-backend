@@ -1,8 +1,8 @@
 import { Router } from "express";
 import * as stockController from "../controllers/stock.controller";
 import * as stockJournalController from "../controllers/stock-journal.controller";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
-import { validateRequest } from "../middleware/validation.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
+import { validateRequest } from "../middlewares/validation.middleware";
 import { updateStockSchema, transferStockSchema } from "../validations/stock.validation";
 
 const router = Router();

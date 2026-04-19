@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middlewares/error.middleware";
 import { StockJournalType } from "../generated/prisma";
 import { createStockJournal } from "./stock-journal.service";
 
