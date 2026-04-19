@@ -29,13 +29,6 @@ const buildDateFilter = (month?: number, year?: number) => {
 };
 
 /**
- * Calculate total revenue from order items
- */
-const calculateRevenue = (items: any[]) => {
-  return items.reduce((sum, item) => sum + Number(item.subtotal), 0);
-};
-
-/**
  * Get monthly trend data for a specific year or the last 12 months
  */
 const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
