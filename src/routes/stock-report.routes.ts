@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as stockReportController from "../controllers/stock-report.controller";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 
 const router = Router();
 

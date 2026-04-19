@@ -12,7 +12,7 @@ import {
     getStores
 } from "../controllers/store.controller";
 import { verifyToken, requireRole } from "../middlewares/auth.middleware";
-import { Role } from "@prisma/client";
+import { Role } from "../generated/prisma";
 
 const router = Router();
 
