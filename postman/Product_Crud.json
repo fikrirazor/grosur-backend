@@ -1,0 +1,229 @@
+{
+  "info": {
+    "name": "Product CRUD",
+    "description": "CRUD operations for products with Cloudinary image upload",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Login (Get Token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"storeadmin@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/signin",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "signin"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response.success && response.data.token) {",
+              "  pm.collectionVariables.set('access_token', response.data.token);",
+              "  console.log('Token saved:', response.data.token);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Get All Categories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/products/categories",
+          "host": ["{{base_url}}"],
+          "path": ["products", "categories"]
+        }
+      }
+    },
+    {
+      "name": "3. Create Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Beras Premium 5kg\",\n  \"description\": \"Beras berkualitas tinggi\",\n  \"price\": 65000,\n  \"categoryId\": \"category-uuid-here\",\n  \"storeId\": \"store-uuid-here\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/products",
+          "host": ["{{base_url}}"],
+          "path": ["products"]
+        }
+      }
+    },
+    {
+      "name": "4. Update Product",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Beras Premium 5kg - Updated\",\n  \"price\": 70000,\n  \"description\": \"Updated description\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/products/:productId?storeId=store-uuid-here",
+          "host": ["{{base_url}}"],
+          "path": ["products", ":productId"],
+          "query": [
+            {
+              "key": "storeId",
+              "value": "store-uuid-here"
+            }
+          ],
+          "variable": [
+            {
+              "key": "productId",
+              "value": "product-uuid-here"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Upload Product Images",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "images",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/products/upload-images?productId=product-uuid-here&storeId=store-uuid-here",
+          "host": ["{{base_url}}"],
+          "path": ["products", "upload-images"],
+          "query": [
+            {
+              "key": "productId",
+              "value": "product-uuid-here"
+            },
+            {
+              "key": "storeId",
+              "value": "store-uuid-here"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Get Public Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/products?storeId=store-uuid-here&page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["products"],
+          "query": [
+            {
+              "key": "storeId",
+              "value": "store-uuid-here"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "search",
+              "value": "beras",
+              "disabled": true
+            },
+            {
+              "key": "categoryId",
+              "value": "category-uuid-here",
+              "disabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Delete Product",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/products/:productId?storeId=store-uuid-here",
+          "host": ["{{base_url}}"],
+          "path": ["products", ":productId"],
+          "query": [
+            {
+              "key": "storeId",
+              "value": "store-uuid-here"
+            }
+          ],
+          "variable": [
+            {
+              "key": "productId",
+              "value": "product-uuid-here"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

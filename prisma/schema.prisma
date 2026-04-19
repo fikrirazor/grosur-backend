@@ -288,6 +288,7 @@ model Voucher {
   value       Decimal     @db.Decimal(10, 2)
   maxDiscount Decimal?    @db.Decimal(10, 2)
   minSpend    Decimal?    @db.Decimal(10, 2)
+  qty         Int         @default(1) // Available quantity
   expiryDate  DateTime
   isUsed      Boolean     @default(false)
   usedAt      DateTime?
