@@ -16,16 +16,22 @@ async function main() {
 
   // 0. Cleanup existing data (Idempotent seed)
   console.log('Cleaning up existing data...');
-  await prisma.stockJournal.deleteMany();
+  // Delete in reverse order of dependencies
+  await prisma.actionLog.deleteMany();
+  await prisma.cronJobLog.deleteMany();
+  await prisma.verificationToken.deleteMany();
+  await prisma.cart.deleteMany();
   await prisma.orderItem.deleteMany();
+  await prisma.stockJournal.deleteMany();
   await prisma.order.deleteMany();
   await prisma.voucher.deleteMany();
   await prisma.discount.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.stock.deleteMany();
+  await prisma.shippingCost.deleteMany();
   await prisma.productImage.deleteMany();
+  await prisma.stock.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.address.deleteMany();
   await prisma.store.deleteMany();
   await prisma.user.deleteMany();
 
