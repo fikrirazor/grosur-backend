@@ -231,3 +231,94 @@ export const sendOrder = async (
     next(error);
   }
 };
+
+/**
+ * Cancel an order by admin.
+ * Can cancel any order before SENT (Dikirim).
+ * Returns stock to the inventory and records it in the StockJournal.
+ */
+export const cancelOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const admin = (req as any).user;
+    const { id } = req.params;
+    const { cancelReason } = req.body;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Order not found");
+    }
+
+    // Role-based access control
+    if (admin.role === "STORE_ADMIN" && order.storeId !== admin.managedStoreId) {
+      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    }
+
+    // Can only cancel before SENT
+    const allowedStatuses: string[] = ["WAITING_PAYMENT", "WAITING_CONFIRMATION", "PROCESSED"];
+    if (!allowedStatuses.includes(order.status)) {
+      return sendResponse(res, 400, false, `Order with status ${order.status} cannot be cancelled`);
+    }
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1. Update Order Status
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+          cancelledBy: "ADMIN",
+          cancelReason: cancelReason || "Cancelled by admin",
+        },
+      });
+
+      // 2. Return Stock and Create Journal for each item
+      for (const item of order.items) {
+        // Fetch current stock
+        const stock = await tx.stock.findUnique({
+          where: { id: item.stockId },
+        });
+
+        if (stock) {
+          const oldQty = stock.quantity;
+          const newQty = oldQty + item.quantity;
+
+          // Update Stock
+          await tx.stock.update({
+            where: { id: stock.id },
+            data: { quantity: newQty },
+          });
+
+          // Create Stock Journal
+          await tx.stockJournal.create({
+            data: {
+              stockId: stock.id,
+              oldQty: oldQty,
+              newQty: newQty,
+              change: item.quantity,
+              type: "RETURN",
+              reason: `Order ${order.orderNumber} cancelled by admin`,
+              orderId: order.id,
+              userId: admin.id,
+            },
+          });
+        }
+      }
+
+      return updated;
+    });
+
+    sendResponse(res, 200, true, "Order cancelled successfully and stock returned", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
