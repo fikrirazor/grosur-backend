@@ -870,6 +870,105 @@ async function main() {
     },
   });
 
+  // 12. ADD APRIL 2024 STOCK JOURNALS FOR REPORT TESTING
+  console.log('Adding April 2026 test records...');
+  
+  const aprilDates = [
+    new Date("2026-04-02T09:00:00Z"),
+    new Date("2026-04-05T14:30:00Z"),
+    new Date("2026-04-10T11:15:00Z"),
+    new Date("2026-04-15T16:45:00Z"),
+    new Date("2026-04-18T10:00:00Z"),
+  ];
+
+  // Restock for Beras Premium 5kg in Jakarta
+  if (riceStockJakarta) {
+    await prisma.stockJournal.createMany({
+      data: [
+        {
+          stockId: riceStockJakarta.id,
+          oldQty: 50,
+          newQty: 100,
+          change: 50,
+          type: "IN",
+          reason: "Monthly restock from main supplier",
+          createdAt: aprilDates[0],
+          userId: admin.id,
+        },
+        {
+          stockId: riceStockJakarta.id,
+          oldQty: 100,
+          newQty: 95,
+          change: -5,
+          type: "OUT",
+          reason: "Manual adjustment: Damaged packaging",
+          createdAt: aprilDates[2],
+          userId: storeAdmin.id,
+        }
+      ]
+    });
+  }
+
+  // Restock for Susu in Jakarta
+  if (milkStockJakarta) {
+    await prisma.stockJournal.create({
+      data: {
+        stockId: milkStockJakarta.id,
+        oldQty: 100,
+        newQty: 150,
+        change: 50,
+        type: "IN",
+        reason: "Supplier delivery A-55",
+        createdAt: aprilDates[1],
+        userId: admin.id,
+      }
+    });
+  }
+
+  // Transfer for Beras: Bandung to Jakarta
+  if (riceStock && riceStockBandung) {
+    await prisma.stockJournal.createMany({
+      data: [
+        {
+          stockId: riceStockBandung.id,
+          oldQty: 30,
+          newQty: 20,
+          change: -10,
+          type: "TRANSFER",
+          reason: "Stock redistribution to Jakarta branch",
+          createdAt: aprilDates[3],
+          userId: admin.id,
+        },
+        {
+          stockId: riceStock.id,
+          oldQty: 95,
+          newQty: 105,
+          change: 10,
+          type: "TRANSFER",
+          reason: "Received from Bandung branch",
+          createdAt: aprilDates[3],
+          userId: admin.id,
+        }
+      ]
+    });
+  }
+
+  // Sale for Egg in Surabaya
+  if (eggStockSurabaya) {
+    await prisma.stockJournal.create({
+      data: {
+        stockId: eggStockSurabaya.id,
+        oldQty: 40,
+        newQty: 30,
+        change: -10,
+        type: "OUT",
+        reason: "Offline walk-in purchase batch",
+        createdAt: aprilDates[4],
+        userId: admin.id,
+      }
+    });
+  }
+
   console.log('Seed completed successfully!');
   console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
 }

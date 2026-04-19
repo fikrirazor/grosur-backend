@@ -121,42 +121,77 @@ export const getStockSummaryReport = async (
 /**
  * Get detailed history of stock changes for a specific product
  */
+/**
+ * Get detailed history of stock changes for a specific product
+ * Supports date range, pagination, and role-based filtering
+ */
 export const getStockDetailReport = async (
   productId: string,
   storeId: string,
-  month: number,
-  year: number
+  startDate?: Date,
+  endDate?: Date,
+  page: number = 1,
+  limit: number = 20
 ) => {
-  const { startDate, endDate } = buildDateRange(month, year);
+  const skip = (page - 1) * limit;
 
-  const journals = await prisma.stockJournal.findMany({
-    where: {
-      stock: {
-        productId,
-        storeId,
-      },
-      createdAt: { gte: startDate, lte: endDate },
+  // Build where clause
+  const where: any = {
+    stock: {
+      productId,
     },
-    include: {
-      stock: {
-        include: {
-          product: { select: { name: true } },
+  };
+
+  // Only filter by store if a specific storeId is provided and not "all"
+  if (storeId && storeId !== "all") {
+    where.stock.storeId = storeId;
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) where.createdAt.gte = startDate;
+    if (endDate) where.createdAt.lte = endDate;
+  }
+
+  // Fetch journals and total count in parallel
+  const [journals, total] = await Promise.all([
+    prisma.stockJournal.findMany({
+      where,
+      include: {
+        stock: {
+          include: {
+            product: { select: { name: true } },
+          },
         },
+        order: { select: { orderNumber: true } },
       },
-      order: { select: { orderNumber: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
+      orderBy: { createdAt: "desc" }, // Most recent first
+      skip,
+      take: limit,
+    }),
+    prisma.stockJournal.count({ where }),
+  ]);
 
-  // Manually fetch user names since relation might be missing or complex
-  const userIds = [...new Set(journals.map(j => j.userId))];
+  // Manually fetch user names (Actor)
+  const userIds = [...new Set(journals.map(j => j.userId).filter(Boolean))];
   const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
+    where: { id: { in: userIds as string[] } },
     select: { id: true, name: true }
   });
 
-  return journals.map(j => ({
+  const formattedData = journals.map(j => ({
     ...j,
     userName: users.find(u => u.id === j.userId)?.name || "System",
   }));
+
+  return {
+    success: true,
+    data: formattedData,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
 };
