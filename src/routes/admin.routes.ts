@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
-import { adminApiMiddleware } from "../middleware/role.middleware";
+import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
+import { adminApiMiddleware } from "../middlewares/role.middleware";
 import { getAllUsers } from "../controllers/admin.user.controller";
 
 const router = Router();
