@@ -1,14 +1,43 @@
-import prisma from '../src/config/database';
-import bcrypt from 'bcrypt';
+// prisma/seed.ts
+import { PrismaClient } from '../src/generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
+import 'dotenv/config';
+
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log('🌱 Starting comprehensive database seed...');
   const hashedPassword = await bcrypt.hash('Password123!', 10);
 
+  // 0. Cleanup existing data (Idempotent seed)
+  console.log('Cleaning up existing data...');
+  // Delete in reverse order of dependencies
+  await prisma.actionLog.deleteMany();
+  await prisma.cronJobLog.deleteMany();
+  await prisma.verificationToken.deleteMany();
+  await prisma.cart.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.stockJournal.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.voucher.deleteMany();
+  await prisma.discount.deleteMany();
+  await prisma.shippingCost.deleteMany();
+  await prisma.productImage.deleteMany();
+  await prisma.stock.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.address.deleteMany();
+  await prisma.store.deleteMany();
+  await prisma.user.deleteMany();
+
   // 1. Create SUPER_ADMIN
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
-    update: {},
-    create: {
+  const admin = await prisma.user.create({
+    data: {
       email: 'admin@example.com',
       password: hashedPassword,
       name: 'Super Admin',
@@ -17,11 +46,9 @@ async function main() {
     },
   });
 
-  // 2. Create USER
-  const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
-    update: {},
-    create: {
+  // 2. Create Regular USER
+  const user = await prisma.user.create({
+    data: {
       email: 'user@example.com',
       password: hashedPassword,
       name: 'Regular User',
@@ -31,10 +58,8 @@ async function main() {
   });
 
   // 3. Create Sample STORES
-  const store = await prisma.store.upsert({
-    where: { name: 'Grosur Pusat Jakarta' },
-    update: {},
-    create: {
+  const store = await prisma.store.create({
+    data: {
       name: 'Grosur Pusat Jakarta',
       description: 'Cabang utama Grosur di Jakarta Selatan',
       address: 'Jl. Sudirman No. 1, Jakarta Selatan',
@@ -47,11 +72,8 @@ async function main() {
     },
   });
 
-  // 3.2. Create Second Store (for transfer testing)
-  const storeBandung = await prisma.store.upsert({
-    where: { name: 'Grosur Cabang Bandung' },
-    update: {},
-    create: {
+  const storeBandung = await prisma.store.create({
+    data: {
       name: 'Grosur Cabang Bandung',
       description: 'Cabang Grosur di Bandung',
       address: 'Jl. Asia Afrika No. 10, Bandung',
@@ -64,11 +86,8 @@ async function main() {
     },
   });
 
-  // 3.3. Create Third Store (for more transfer options)
-  const storeSurabaya = await prisma.store.upsert({
-    where: { name: 'Grosur Cabang Surabaya' },
-    update: {},
-    create: {
+  const storeSurabaya = await prisma.store.create({
+    data: {
       name: 'Grosur Cabang Surabaya',
       description: 'Cabang Grosur di Surabaya',
       address: 'Jl. Tunjungan No. 5, Surabaya',
@@ -81,11 +100,9 @@ async function main() {
     },
   });
 
-  // 3.5. Create STORE_ADMIN (after store is created)
-  const storeAdmin = await prisma.user.upsert({
-    where: { email: 'storeadmin@example.com' },
-    update: {},
-    create: {
+  // 4. Create STORE_ADMIN
+  const storeAdmin = await prisma.user.create({
+    data: {
       email: 'storeadmin@example.com',
       password: hashedPassword,
       name: 'Store Admin Jakarta',
@@ -95,24 +112,18 @@ async function main() {
     },
   });
 
-  // 4. Create CATEGORIES
-  const catSembako = await prisma.category.upsert({
-    where: { slug: 'sembako' },
-    update: {},
-    create: { name: 'Sembako', slug: 'sembako' },
+  // 5. Create CATEGORIES
+  const catSembako = await prisma.category.create({
+    data: { name: 'Sembako', slug: 'sembako' },
   });
 
-  const catFresh = await prisma.category.upsert({
-    where: { slug: 'fresh-food' },
-    update: {},
-    create: { name: 'Fresh Food', slug: 'fresh-food' },
+  const catFresh = await prisma.category.create({
+    data: { name: 'Fresh Food', slug: 'fresh-food' },
   });
 
-  // 5. Create PRODUCTS
-  const prodRice = await prisma.product.upsert({
-    where: { slug: 'beras-premium-5kg' },
-    update: {},
-    create: {
+  // 6. Create PRODUCTS
+  const prodRice = await prisma.product.create({
+    data: {
       name: 'Beras Premium 5kg',
       slug: 'beras-premium-5kg',
       description: 'Beras putih kualitas premium, pulen dan bersih.',
@@ -125,10 +136,8 @@ async function main() {
     },
   });
 
-  const prodMilk = await prisma.product.upsert({
-    where: { slug: 'susu-uht-full-cream' },
-    update: {},
-    create: {
+  const prodMilk = await prisma.product.create({
+    data: {
       name: 'Susu UHT Full Cream 1L',
       slug: 'susu-uht-full-cream',
       description: 'Susu sapi segar kemasan siap minum.',
@@ -141,10 +150,8 @@ async function main() {
     },
   });
 
-  const prodEgg = await prisma.product.upsert({
-    where: { slug: 'telur-ayam-negeri-10pcs' },
-    update: {},
-    create: {
+  const prodEgg = await prisma.product.create({
+    data: {
       name: 'Telur Ayam Negeri 10pcs',
       slug: 'telur-ayam-negeri-10pcs',
       description: 'Telur ayam negeri segar pilihan.',
@@ -157,11 +164,8 @@ async function main() {
     },
   });
 
-  // Product 4: Minyak Goreng (High stock)
-  const prodOil = await prisma.product.upsert({
-    where: { slug: 'minyak-goreng-2l' },
-    update: {},
-    create: {
+  const prodOil = await prisma.product.create({
+    data: {
       name: 'Minyak Goreng 2L',
       slug: 'minyak-goreng-2l',
       description: 'Minyak goreng kelapa sawit berkualitas 2 liter.',
@@ -174,11 +178,8 @@ async function main() {
     },
   });
 
-  // Product 5: Gula Pasir (Medium stock)
-  const prodSugar = await prisma.product.upsert({
-    where: { slug: 'gula-pasir-1kg' },
-    update: {},
-    create: {
+  const prodSugar = await prisma.product.create({
+    data: {
       name: 'Gula Pasir 1kg',
       slug: 'gula-pasir-1kg',
       description: 'Gula pasir putih premium kemasan 1kg.',
@@ -191,20 +192,18 @@ async function main() {
     },
   });
 
-  // 6. Create STOCKS
+  // 7. Create STOCKS
   const stocks = [
     { productId: prodRice.id, storeId: store.id, quantity: 50 },
     { productId: prodMilk.id, storeId: store.id, quantity: 100 },
-    { productId: prodEgg.id, storeId: store.id, quantity: 0 }, // Out of stock example
+    { productId: prodEgg.id, storeId: store.id, quantity: 0 },
     { productId: prodOil.id, storeId: store.id, quantity: 75 },
     { productId: prodSugar.id, storeId: store.id, quantity: 30 },
-    // Stock for second store (Bandung)
     { productId: prodRice.id, storeId: storeBandung.id, quantity: 20 },
     { productId: prodMilk.id, storeId: storeBandung.id, quantity: 30 },
     { productId: prodEgg.id, storeId: storeBandung.id, quantity: 45 },
     { productId: prodOil.id, storeId: storeBandung.id, quantity: 60 },
     { productId: prodSugar.id, storeId: storeBandung.id, quantity: 25 },
-    // Stock for third store (Surabaya)
     { productId: prodRice.id, storeId: storeSurabaya.id, quantity: 15 },
     { productId: prodMilk.id, storeId: storeSurabaya.id, quantity: 25 },
     { productId: prodEgg.id, storeId: storeSurabaya.id, quantity: 40 },
@@ -213,220 +212,10 @@ async function main() {
   ];
 
   for (const s of stocks) {
-    await prisma.stock.upsert({
-      where: {
-        productId_storeId: {
-          productId: s.productId,
-          storeId: s.storeId,
-        },
-      },
-      update: { quantity: s.quantity },
-      create: s,
-    });
+    await prisma.stock.create({ data: s });
   }
 
-  // 7. Create SAMPLE STOCK JOURNALS (for testing history)
-  const riceStock = await prisma.stock.findUnique({
-    where: {
-      productId_storeId: {
-        productId: prodRice.id,
-        storeId: store.id,
-      },
-    },
-  });
-
-  if (riceStock) {
-    // Journal 1: Initial stock IN
-    await prisma.stockJournal.create({
-      data: {
-        stockId: riceStock.id,
-        oldQty: 0,
-        newQty: 50,
-        change: 50,
-        type: "IN",
-        reason: "Initial stock from supplier",
-        userId: admin.id,
-      },
-    });
-
-    // Journal 2: Stock OUT (sale)
-    await prisma.stockJournal.create({
-      data: {
-        stockId: riceStock.id,
-        oldQty: 50,
-        newQty: 45,
-        change: -5,
-        type: "OUT",
-        reason: "Customer order #ORD-001",
-        userId: user.id,
-      },
-    });
-
-    // Journal 3: Stock IN (restock)
-    await prisma.stockJournal.create({
-      data: {
-        stockId: riceStock.id,
-        oldQty: 45,
-        newQty: 50,
-        change: 5,
-        type: "IN",
-        reason: "Restock from warehouse",
-        userId: storeAdmin.id,
-      },
-    });
-  }
-
-  // Create sample TRANSFER journals
-  const riceStockBandung = await prisma.stock.findUnique({
-    where: {
-      productId_storeId: {
-        productId: prodRice.id,
-        storeId: storeBandung.id,
-      },
-    },
-  });
-
-  if (riceStock && riceStockBandung) {
-    // Transfer journal OUT (Jakarta)
-    await prisma.stockJournal.create({
-      data: {
-        stockId: riceStock.id,
-        oldQty: 50,
-        newQty: 40,
-        change: -10,
-        type: "TRANSFER",
-        reason: "Transfer to Bandung branch for restock",
-        userId: admin.id,
-      },
-    });
-
-    // Transfer journal IN (Bandung)
-    await prisma.stockJournal.create({
-      data: {
-        stockId: riceStockBandung.id,
-        oldQty: 20,
-        newQty: 30,
-        change: 10,
-        type: "TRANSFER",
-        reason: "Received transfer from Jakarta branch",
-        userId: admin.id,
-      },
-    });
-  }
-
-  // 8. Create SAMPLE DISCOUNTS (for testing)
-  // Discount 1: Percentage discount for Beras in Jakarta (ACTIVE - Future dates)
-  await prisma.discount.create({
-    data: {
-      storeId: store.id,
-      productId: prodRice.id,
-      type: "PERCENT",
-      value: "20", // 20%
-      minSpend: "100000",
-      maxDiscount: "50000",
-      startDate: new Date("2024-01-01T00:00:00Z"),
-      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
-      isActive: true,
-    },
-  });
-
-  // Discount 2: B1G1 for Susu in Jakarta (ACTIVE - Future dates)
-  await prisma.discount.create({
-    data: {
-      storeId: store.id,
-      productId: prodMilk.id,
-      type: "B1G1",
-      value: "0",
-      buyQty: 2,
-      freeQty: 1,
-      startDate: new Date("2024-01-01T00:00:00Z"),
-      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
-      isActive: true,
-    },
-  });
-
-  // Discount 3: Nominal discount for all products in Bandung (ACTIVE - Future dates)
-  await prisma.discount.create({
-    data: {
-      storeId: storeBandung.id,
-      productId: null, // Store-wide discount
-      type: "NOMINAL",
-      value: "15000", // Rp 15,000 off
-      minSpend: "50000",
-      startDate: new Date("2024-01-01T00:00:00Z"),
-      endDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
-      isActive: true,
-    },
-  });
-
-  // 9. Create SAMPLE VOUCHERS (for testing)
-  // Delete existing vouchers first to avoid unique constraint
-  await prisma.voucher.deleteMany({
-    where: {
-      userId: user.id,
-    },
-  });
-
-  // Voucher 1: Percentage voucher for user (ACTIVE - Future expiry)
-  await prisma.voucher.create({
-    data: {
-      code: "WELCOME25",
-      userId: user.id,
-      type: "TOTAL",
-      value: "25", // 25%
-      maxDiscount: "50000",
-      minSpend: "100000",
-      qty: 1,
-      expiryDate: new Date("2027-12-31T23:59:59Z"), // Active until end of 2027
-      isUsed: false,
-    },
-  });
-
-  // Voucher 2: Nominal voucher for product-specific (ACTIVE - Future expiry)
-  await prisma.voucher.create({
-    data: {
-      code: "BERAS10K",
-      userId: user.id,
-      productId: prodRice.id,
-      type: "PRODUCT",
-      value: "10000", // Rp 10,000 off
-      minSpend: "50000",
-      qty: 3, // Can be used 3 times
-      expiryDate: new Date("2027-06-30T23:59:59Z"), // Active until mid 2027
-      isUsed: false,
-    },
-  });
-
-  // Voucher 3: Free shipping voucher (ACTIVE - Future expiry)
-  await prisma.voucher.create({
-    data: {
-      code: "FREESHIP",
-      userId: user.id,
-      type: "SHIPPING",
-      value: "15000", // Rp 15,000 shipping discount
-      minSpend: "75000",
-      qty: 2,
-      expiryDate: new Date("2027-04-30T23:59:59Z"), // Active until Apr 2027
-      isUsed: false,
-    },
-  });
-
-  // Voucher 4: Used voucher (for testing) - Keep as used/expired
-  await prisma.voucher.create({
-    data: {
-      code: "USED50",
-      userId: user.id,
-      type: "TOTAL",
-      value: "50000",
-      minSpend: "200000",
-      qty: 0, // Exhausted
-      expiryDate: new Date("2024-03-31T23:59:59Z"), // Expired
-      isUsed: true,
-      usedAt: new Date("2024-02-15T10:30:00Z"),
-    },
-  });
-
-  // 10. Create SAMPLE ADDRESSES (required for orders)
+  // 8. Create ADDRESSES
   const addressJakarta = await prisma.address.create({
     data: {
       userId: user.id,
@@ -436,7 +225,8 @@ async function main() {
       city: "Jakarta Selatan",
       district: "Kebayoran Baru",
       detail: "Jl. Sudirman No. 10",
-      postalCode: "12190",
+      provinceId: "6",
+      cityId: "151",
       isDefault: true,
     },
   });
@@ -450,12 +240,13 @@ async function main() {
       city: "Bandung",
       district: "Bandung Wetan",
       detail: "Jl. Asia Afrika No. 20",
-      postalCode: "40115",
+      provinceId: "9",
+      cityId: "23",
       isDefault: false,
     },
   });
 
-  const addressSurabaya = await prisma.address.create({
+  await prisma.address.create({
     data: {
       userId: user.id,
       name: "Rumah Surabaya",
@@ -464,12 +255,13 @@ async function main() {
       city: "Surabaya",
       district: "Genteng",
       detail: "Jl. Tunjungan No. 30",
-      postalCode: "60275",
+      provinceId: "11",
+      cityId: "444",
       isDefault: false,
     },
   });
 
-  // Get stock IDs for order items
+  // 9. Get stock IDs for testing journals and orders
   const riceStockJakarta = await prisma.stock.findUnique({
     where: { productId_storeId: { productId: prodRice.id, storeId: store.id } },
   });
@@ -482,396 +274,223 @@ async function main() {
   const sugarStockJakarta = await prisma.stock.findUnique({
     where: { productId_storeId: { productId: prodSugar.id, storeId: store.id } },
   });
+  const riceStockBandung = await prisma.stock.findUnique({
+    where: { productId_storeId: { productId: prodRice.id, storeId: storeBandung.id } },
+  });
   const milkStockBandung = await prisma.stock.findUnique({
     where: { productId_storeId: { productId: prodMilk.id, storeId: storeBandung.id } },
   });
-  const eggStockSurabaya = await prisma.stock.findUnique({
+  await prisma.stock.findUnique({
     where: { productId_storeId: { productId: prodEgg.id, storeId: storeSurabaya.id } },
   });
 
-  // 11. Create SAMPLE ORDERS (for sales report testing)
-  // Order 1: January 2024 - Jakarta Store
-  await prisma.order.create({
+  // 10. Create SAMPLE DISCOUNTS
+  // Jakarta Discounts
+  await prisma.discount.create({
     data: {
-      orderNumber: "ORD-20240115-001",
-      userId: user.id,
       storeId: store.id,
-      addressId: addressJakarta.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "240500",
-      shippingCost: "10000",
-      discountAmount: "0",
-      totalAmount: "250500",
+      productId: prodRice.id,
+      type: "PERCENT",
+      value: 20,
+      minSpend: 100000,
+      maxDiscount: 50000,
+      startDate: new Date("2026-04-19T00:00:00Z"),
+      endDate: new Date("2026-06-30T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  await prisma.discount.create({
+    data: {
+      storeId: store.id,
+      productId: prodMilk.id,
+      type: "B1G1",
+      value: 0,
+      buyQty: 2,
+      freeQty: 1,
+      startDate: new Date("2026-04-01T00:00:00Z"),
+      endDate: new Date("2026-05-31T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  // Bandung Discounts
+  await prisma.discount.create({
+    data: {
+      storeId: storeBandung.id,
+      productId: prodOil.id,
+      type: "NOMINAL",
+      value: 5000,
+      minSpend: 50000,
+      startDate: new Date("2026-04-19T00:00:00Z"),
+      endDate: new Date("2026-06-15T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  // Surabaya Discounts
+  await prisma.discount.create({
+    data: {
+      storeId: storeSurabaya.id,
+      productId: prodSugar.id,
+      type: "PERCENT",
+      value: 15,
+      minSpend: 30000,
+      maxDiscount: 10000,
+      startDate: new Date("2026-04-15T00:00:00Z"),
+      endDate: new Date("2026-06-30T23:59:59Z"),
+      isActive: true,
+    },
+  });
+
+  // 11. Create SAMPLE VOUCHERS
+  await prisma.voucher.create({
+    data: {
+      code: "WELCOME25",
+      userId: user.id,
+      type: "TOTAL",
+      value: 25,
+      maxDiscount: 50000,
+      minSpend: 100000,
+      qty: 1,
+      expiryDate: new Date("2027-12-31T23:59:59Z"),
+      isUsed: false,
+    },
+  });
+
+  // 12. Create SAMPLE ORDERS (spread across months for reports)
+  const orderData = [
+    {
+      orderNumber: "ORD-20260115-001",
       createdAt: new Date("2026-01-15T10:30:00Z"),
-      paidAt: new Date("2026-01-15T10:35:00Z"),
-      confirmedAt: new Date("2026-01-15T11:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 2,
-            price: "75000",
-            discount: "0",
-            subtotal: "150000",
-          },
-          {
-            productId: prodMilk.id,
-            stockId: milkStockJakarta!.id,
-            quantity: 3,
-            price: "18500",
-            discount: "0",
-            subtotal: "55500",
-          },
-          {
-            productId: prodOil.id,
-            stockId: oilStockJakarta!.id,
-            quantity: 1,
-            price: "35000",
-            discount: "0",
-            subtotal: "35000",
-          },
-        ],
-      },
-    },
-  });
-
-  // Order 2: January 2024 - Jakarta Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240120-002",
-      userId: user.id,
       storeId: store.id,
       addressId: addressJakarta.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "150000",
-      shippingCost: "10000",
-      discountAmount: "15000",
-      totalAmount: "145000",
+      subtotal: 240500,
+      shippingCost: 10000,
+      discountAmount: 0,
+      totalAmount: 250500,
+      items: [
+        { productId: prodRice.id, stockId: riceStockJakarta!.id, quantity: 2, price: 75000, subtotal: 150000 },
+        { productId: prodMilk.id, stockId: milkStockJakarta!.id, quantity: 3, price: 18500, subtotal: 55500 },
+        { productId: prodOil.id, stockId: oilStockJakarta!.id, quantity: 1, price: 35000, subtotal: 35000 },
+      ]
+    },
+    {
+      orderNumber: "ORD-20260120-002",
       createdAt: new Date("2026-01-20T14:15:00Z"),
-      paidAt: new Date("2026-01-20T14:20:00Z"),
-      confirmedAt: new Date("2026-01-20T15:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 1,
-            price: "75000",
-            discount: "0",
-            subtotal: "75000",
-          },
-          {
-            productId: prodSugar.id,
-            stockId: sugarStockJakarta!.id,
-            quantity: 5,
-            price: "15000",
-            discount: "0",
-            subtotal: "75000",
-          },
-        ],
-      },
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      subtotal: 150000,
+      shippingCost: 10000,
+      discountAmount: 15000,
+      totalAmount: 145000,
+      items: [
+        { productId: prodRice.id, stockId: riceStockJakarta!.id, quantity: 1, price: 75000, subtotal: 75000 },
+        { productId: prodSugar.id, stockId: sugarStockJakarta!.id, quantity: 5, price: 15000, subtotal: 75000 },
+      ]
     },
-  });
-
-  // Order 3: January 2024 - Bandung Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240118-003",
-      userId: user.id,
-      storeId: storeBandung.id,
-      addressId: addressBandung.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "185000",
-      shippingCost: "12000",
-      discountAmount: "0",
-      totalAmount: "197000",
+    {
+      orderNumber: "ORD-20260118-003",
       createdAt: new Date("2026-01-18T09:45:00Z"),
-      paidAt: new Date("2026-01-18T09:50:00Z"),
-      confirmedAt: new Date("2026-01-18T10:30:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodMilk.id,
-            stockId: milkStockBandung!.id,
-            quantity: 10,
-            price: "18500",
-            discount: "0",
-            subtotal: "185000",
-          },
-        ],
-      },
+      storeId: storeBandung.id,
+      addressId: addressBandung.id,
+      subtotal: 185000,
+      shippingCost: 12000,
+      discountAmount: 0,
+      totalAmount: 197000,
+      items: [
+        { productId: prodMilk.id, stockId: milkStockBandung!.id, quantity: 10, price: 18500, subtotal: 185000 },
+      ]
     },
-  });
-
-  // Order 4: February 2024 - Jakarta Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240210-004",
-      userId: user.id,
-      storeId: store.id,
-      addressId: addressJakarta.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "300000",
-      shippingCost: "10000",
-      discountAmount: "30000",
-      totalAmount: "280000",
+    {
+      orderNumber: "ORD-20260210-004",
       createdAt: new Date("2026-02-10T16:20:00Z"),
-      paidAt: new Date("2026-02-10T16:25:00Z"),
-      confirmedAt: new Date("2026-02-10T17:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 4,
-            price: "75000",
-            discount: "0",
-            subtotal: "300000",
-          },
-        ],
-      },
-    },
-  });
-
-  // Order 5: January 2024 - Surabaya Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240125-005",
-      userId: user.id,
-      storeId: storeSurabaya.id,
-      addressId: addressSurabaya.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "125000",
-      shippingCost: "15000",
-      discountAmount: "0",
-      totalAmount: "140000",
-      createdAt: new Date("2026-01-25T11:00:00Z"),
-      paidAt: new Date("2026-01-25T11:05:00Z"),
-      confirmedAt: new Date("2026-01-25T12:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodEgg.id,
-            stockId: eggStockSurabaya!.id,
-            quantity: 5,
-            price: "25000",
-            discount: "0",
-            subtotal: "125000",
-          },
-        ],
-      },
-    },
-  });
-
-  // Order 6: PENDING order (should NOT appear in sales report)
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240128-006",
-      userId: user.id,
       storeId: store.id,
       addressId: addressJakarta.id,
-      status: "WAITING_PAYMENT",
-      paymentStatus: "PENDING",
-      subtotal: "467500",
-      shippingCost: "10000",
-      discountAmount: "0",
-      totalAmount: "477500",
-      createdAt: new Date("2026-01-28T08:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 5,
-            price: "75000",
-            discount: "0",
-            subtotal: "375000",
-          },
-          {
-            productId: prodMilk.id,
-            stockId: milkStockJakarta!.id,
-            quantity: 5,
-            price: "18500",
-            discount: "0",
-            subtotal: "92500",
-          },
-        ],
-      },
+      subtotal: 300000,
+      shippingCost: 10000,
+      discountAmount: 30000,
+      totalAmount: 280000,
+      items: [
+        { productId: prodRice.id, stockId: riceStockJakarta!.id, quantity: 4, price: 75000, subtotal: 300000 },
+      ]
     },
-  });
-
-  // Order 7: March 2024 - Jakarta Store (More variety)
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240305-007",
-      userId: user.id,
-      storeId: store.id,
-      addressId: addressJakarta.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "92500",
-      shippingCost: "10000",
-      discountAmount: "0",
-      totalAmount: "102500",
+    {
+      orderNumber: "ORD-20260305-007",
       createdAt: new Date("2026-03-05T13:30:00Z"),
-      paidAt: new Date("2026-03-05T13:35:00Z"),
-      confirmedAt: new Date("2026-03-05T14:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodMilk.id,
-            stockId: milkStockJakarta!.id,
-            quantity: 5,
-            price: "18500",
-            discount: "0",
-            subtotal: "92500",
-          },
-        ],
-      },
-    },
-  });
+      storeId: store.id,
+      addressId: addressJakarta.id,
+      subtotal: 92500,
+      shippingCost: 10000,
+      discountAmount: 0,
+      totalAmount: 102500,
+      items: [
+        { productId: prodMilk.id, stockId: milkStockJakarta!.id, quantity: 5, price: 18500, subtotal: 92500 },
+      ]
+    }
+  ];
 
-  // Order 8: March 2024 - Bandung Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240310-008",
-      userId: user.id,
-      storeId: storeBandung.id,
-      addressId: addressBandung.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "112500",
-      shippingCost: "12000",
-      discountAmount: "0",
-      totalAmount: "124500",
-      createdAt: new Date("2026-03-10T10:15:00Z"),
-      paidAt: new Date("2026-03-10T10:20:00Z"),
-      confirmedAt: new Date("2026-03-10T11:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodEgg.id,
-            stockId: eggStockSurabaya!.id,
-            quantity: 3,
-            price: "25000",
-            discount: "0",
-            subtotal: "75000",
-          },
-          {
-            productId: prodSugar.id,
-            stockId: sugarStockJakarta!.id,
-            quantity: 2,
-            price: "15000",
-            discount: "0",
-            subtotal: "30000",
-          },
-        ],
-      },
-    },
-  });
+  for (const o of orderData) {
+    await prisma.order.create({
+      data: {
+        orderNumber: o.orderNumber,
+        userId: user.id,
+        storeId: o.storeId,
+        addressId: o.addressId,
+        status: "CONFIRMED",
+        paymentStatus: "PAID",
+        subtotal: o.subtotal,
+        shippingCost: o.shippingCost,
+        discountAmount: o.discountAmount,
+        totalAmount: o.totalAmount,
+        createdAt: o.createdAt,
+        items: {
+          create: o.items.map(i => ({
+            productId: i.productId,
+            stockId: i.stockId,
+            quantity: i.quantity,
+            price: i.price,
+            subtotal: i.subtotal
+          }))
+        }
+      }
+    });
+  }
 
-  // Order 9: January 2024 - Surabaya Store (More products)
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240130-009",
-      userId: user.id,
-      storeId: storeSurabaya.id,
-      addressId: addressSurabaya.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "160000",
-      shippingCost: "15000",
-      discountAmount: "0",
-      totalAmount: "175000",
-      createdAt: new Date("2026-01-30T15:45:00Z"),
-      paidAt: new Date("2026-01-30T15:50:00Z"),
-      confirmedAt: new Date("2026-01-30T16:30:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 1,
-            price: "75000",
-            discount: "0",
-            subtotal: "75000",
-          },
-          {
-            productId: prodOil.id,
-            stockId: oilStockJakarta!.id,
-            quantity: 1,
-            price: "35000",
-            discount: "0",
-            subtotal: "35000",
-          },
-          {
-            productId: prodSugar.id,
-            stockId: sugarStockJakarta!.id,
-            quantity: 3,
-            price: "15000",
-            discount: "0",
-            subtotal: "45000",
-          },
-        ],
-      },
-    },
-  });
+  // 13. STOCK JOURNALS
+  console.log('Adding Stock Journals...');
+  const aprilDates = [
+    new Date("2026-04-02T09:00:00Z"),
+    new Date("2026-04-05T14:30:00Z"),
+    new Date("2026-04-10T11:15:00Z"),
+    new Date("2026-04-15T16:45:00Z"),
+  ];
 
-  // Order 10: February 2024 - Bandung Store
-  await prisma.order.create({
-    data: {
-      orderNumber: "ORD-20240215-010",
-      userId: user.id,
-      storeId: storeBandung.id,
-      addressId: addressBandung.id,
-      status: "CONFIRMED",
-      paymentStatus: "PAID",
-      subtotal: "210000",
-      shippingCost: "12000",
-      discountAmount: "20000",
-      totalAmount: "202000",
-      createdAt: new Date("2026-02-15T09:00:00Z"),
-      paidAt: new Date("2026-02-15T09:05:00Z"),
-      confirmedAt: new Date("2026-02-15T10:00:00Z"),
-      items: {
-        create: [
-          {
-            productId: prodRice.id,
-            stockId: riceStockJakarta!.id,
-            quantity: 2,
-            price: "75000",
-            discount: "0",
-            subtotal: "150000",
-          },
-          {
-            productId: prodOil.id,
-            stockId: oilStockJakarta!.id,
-            quantity: 1,
-            price: "35000",
-            discount: "0",
-            subtotal: "35000",
-          },
-          {
-            productId: prodSugar.id,
-            stockId: sugarStockJakarta!.id,
-            quantity: 1,
-            price: "15000",
-            discount: "0",
-            subtotal: "15000",
-          },
-        ],
-      },
-    },
-  });
+  if (riceStockJakarta) {
+    await prisma.stockJournal.createMany({
+      data: [
+        { stockId: riceStockJakarta.id, oldQty: 50, newQty: 100, change: 50, type: "IN", reason: "Monthly restock", createdAt: aprilDates[0], userId: admin.id },
+        { stockId: riceStockJakarta.id, oldQty: 100, newQty: 95, change: -5, type: "OUT", reason: "Damaged goods", createdAt: aprilDates[2], userId: storeAdmin.id }
+      ]
+    });
+  }
 
-  console.log('Seed completed successfully!');
-  console.log({ admin, storeAdmin, user, store, products: [prodRice, prodMilk, prodEgg] });
+  if (riceStockBandung && riceStockJakarta) {
+    await prisma.stockJournal.create({
+      data: {
+        stockId: riceStockBandung.id,
+        oldQty: 30,
+        newQty: 20,
+        change: -10,
+        type: "TRANSFER",
+        reason: "Transfer to Jakarta",
+        createdAt: aprilDates[3],
+        userId: admin.id,
+      }
+    });
+  }
+
+  console.log('✅ Seed completed successfully!');
 }
 
 main()
@@ -881,4 +500,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

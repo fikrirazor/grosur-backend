@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middlewares/error.middleware";
 import * as stockService from "../services/stock.service";
 
 export const updateStock = async (

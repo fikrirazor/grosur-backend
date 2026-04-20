@@ -111,21 +111,48 @@ export const getStockDetail = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { productId, storeId, month, year } = req.query;
+    const { productId, storeId, startDate, endDate, page, limit } = req.query;
+    const { userId, role } = req.user as any;
 
-    if (!productId || !storeId || !month || !year) {
-      res.status(400).json({ success: false, message: "Missing required parameters" });
+    if (!productId) {
+      res.status(400).json({ success: false, message: "Product ID is required" });
       return;
+    }
+
+    // Role-based store selection
+    let targetStoreId = storeId as string;
+    if (role === "STORE_ADMIN") {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { managedStoreId: true }
+      });
+      if (!user?.managedStoreId) {
+        res.status(403).json({ success: false, message: "Admin has no managed store" });
+        return;
+      }
+      targetStoreId = user.managedStoreId;
+    }
+
+    if (!targetStoreId) {
+      res.status(400).json({ success: false, message: "Store ID is required" });
+      return;
+    }
+
+    const end = endDate ? new Date(endDate as string) : undefined;
+    if (end) {
+      end.setHours(23, 59, 59, 999);
     }
 
     const detail = await reportService.getStockDetailReport(
       productId as string,
-      storeId as string,
-      parseInt(month as string),
-      parseInt(year as string)
+      targetStoreId,
+      startDate ? new Date(startDate as string) : undefined,
+      end,
+      page ? parseInt(page as string) : 1,
+      limit ? parseInt(limit as string) : 20
     );
 
-    res.status(200).json({ success: true, data: detail });
+    res.status(200).json(detail);
   } catch (error) {
     next(error);
   }

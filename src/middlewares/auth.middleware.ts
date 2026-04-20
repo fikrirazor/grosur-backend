@@ -3,10 +3,11 @@ import jwt from "jsonwebtoken";
 import config from "../config/env";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
+import { Role } from "../generated/prisma";
 
 interface JwtPayload {
-  userId: string;
-  email: string;
+  id: string;
+  role: Role;
 }
 
 export const verifyToken = async (
@@ -26,8 +27,10 @@ export const verifyToken = async (
         undefined,
         "UNAUTHORIZED",
       );
-    const decoded = jwt.verify(token, config.jwt.secret) as JwtPayload;
-    const user = await fetchAuthUser(decoded.userId);
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    const user = await fetchAuthUser(decoded.id);
+
     if (!user)
       return sendResponse(
         res,
@@ -38,6 +41,7 @@ export const verifyToken = async (
         undefined,
         "UNAUTHORIZED",
       );
+
     (req as any).user = user;
     next();
   } catch (error) {
@@ -46,6 +50,7 @@ export const verifyToken = async (
 };
 
 const extractToken = (req: Request) =>
+  req.cookies?.token ||
   req.cookies?.access_token ||
   (req.headers.authorization?.startsWith("Bearer ")
     ? req.headers.authorization.substring(7)
@@ -61,6 +66,9 @@ const fetchAuthUser = async (id: string) =>
       role: true,
       isVerified: true,
       managedStore: true,
+      phone: true,
+      photo: true,
+      referralCode: true,
     },
   });
 
@@ -79,12 +87,14 @@ const handleAuthError = (res: Response, error: any) => {
   );
 };
 
-export const authorizeRoles = (...roles: string[]) => {
+export const requireRole = (allowedRoles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const userRole = (req as any).user?.role;
-    if (!roles.includes(userRole)) {
+    if (!userRole || !allowedRoles.includes(userRole as Role)) {
       return sendResponse(res, 403, false, "Forbidden: Access denied.");
     }
     next();
   };
 };
+
+export const authorizeRoles = (...roles: string[]) => requireRole(roles as Role[]);

@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../middlewares/error.middleware";
 
 /**
  * Build date range filter for orders
@@ -26,13 +26,6 @@ const buildDateFilter = (month?: number, year?: number) => {
       },
     };
   }
-};
-
-/**
- * Calculate total revenue from order items
- */
-const calculateRevenue = (items: any[]) => {
-  return items.reduce((sum, item) => sum + Number(item.subtotal), 0);
 };
 
 /**
