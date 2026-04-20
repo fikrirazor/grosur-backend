@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as salesService from "../services/sales.service";
 import * as reportService from "../services/report.service";
+import prisma from "../config/database";
 
 export const getSalesReport = async (
   req: Request,

@@ -386,7 +386,7 @@ export const uploadPaymentProof = async (
  * Called periodically or on-demand.
  */
 export const cancelExpiredOrders = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -500,7 +500,7 @@ export const confirmOrderReceipt = async (
  * Automatically confirm orders that have been SENT for more than 48 hours.
  */
 export const autoConfirmShippedOrders = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {

@@ -1,5 +1,5 @@
 // src/services/auth.service.ts
-import bcrypt from "bcrypt";
+
 import jwt from "jsonwebtoken";
 import prisma from "../config/database";
 import crypto from "crypto";
@@ -76,7 +76,8 @@ export const validateCredentials = async (email: string, pass: string) => {
 
 export const formatAuthResponse = (user: any) => {
   const token = generateToken({
-    id: user.id,
+    userId: user.id,
+    email: user.email,
     role: user.role,
   });
   const { password: _, ...userWithoutPassword } = user;
@@ -98,7 +99,8 @@ export const createUnverifiedUser = async (email: string, referredBy?: string) =
       role: "USER",
       referredBy: referredBy || null,
       referralCode,
-    }
+    },
+    include: { managedStore: true }
   });
 };
 

@@ -2,7 +2,6 @@
 import { Request, Response, NextFunction } from "express";
 import config from "../config/env";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { sendVerificationEmail, sendResetPasswordEmail } from "../services/mailer.service";
 import prisma from "../config/database";
@@ -45,7 +44,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const token = generateRandomToken();
-    await createVerifyToken(user.id, token);
+    await createVerifyToken(user!.id, token);
     await sendVerificationEmail(email, token);
 
     return sendResponse(res, 200, true, "Verification email sent");
@@ -128,7 +127,7 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const logout = async (req: Request, res: Response, next: NextFunction) => {
+export const logout = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     res.clearCookie("token");
     res.clearCookie("access_token");

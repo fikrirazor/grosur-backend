@@ -16,7 +16,6 @@ const envSchema = z.object({
   RAJAONGKIR_API_KEY: z.string().min(1, "RAJAONGKIR_API_KEY is required"),
   OPENCAGE_API_KEY: z.string().min(1, "OPENCAGE_API_KEY is required"),
   CORS_ORIGIN: z.string().default("*"),
-  RAJAONGKIR_API_KEY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
 });
 
