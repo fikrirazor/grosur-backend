@@ -369,3 +369,46 @@ export const cancelExpiredOrders = async (
     next(error);
   }
 };
+
+/**
+ * User-initiated cancellation of an order.
+ * Can only cancel if status is WAITING_PAYMENT.
+ */
+export const cancelOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { id } = req.params;
+
+    const order = await prisma.order.findFirst({
+      where: { id, userId },
+    });
+
+    if (!order) {
+      sendResponse(res, 404, false, "Pesanan tidak ditemukan");
+      return;
+    }
+
+    if (order.status !== "WAITING_PAYMENT") {
+      sendResponse(res, 400, false, "Pesanan ini sudah tidak bisa dibatalkan");
+      return;
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelledBy: "USER",
+        cancelReason: "Dibatalkan oleh pengguna",
+      },
+    });
+
+    sendResponse(res, 200, true, "Pesanan berhasil dibatalkan", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
