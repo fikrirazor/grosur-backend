@@ -194,11 +194,11 @@ export const getOrders = async (
         take: Number(limit),
       }),
       prisma.order.count({ where }),
-      // Auto-confirm orders that have been SENT for more than 48 hours
+      // Auto-confirm orders that have been SENT for more than 7 days (168 hours)
       prisma.order.updateMany({
         where: {
           status: "SENT",
-          sentAt: { lt: new Date(Date.now() - 48 * 60 * 60 * 1000) },
+          sentAt: { lt: new Date(Date.now() - 168 * 60 * 60 * 1000) },
         },
         data: {
           status: "CONFIRMED",
@@ -251,10 +251,10 @@ export const getOrderDetails = async (
 
     if (!order) return sendResponse(res, 404, false, "Order not found");
 
-    // Auto-confirm if this specific order is SENT and older than 48h
+    // Auto-confirm if this specific order is SENT and older than 7 days (168h)
     if (order.status === "SENT" && order.sentAt) {
-      const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-      if (new Date(order.sentAt) < fortyEightHoursAgo) {
+      const sevenDaysAgo = new Date(Date.now() - 168 * 60 * 60 * 1000);
+      if (new Date(order.sentAt) < sevenDaysAgo) {
         const updatedOrder = await prisma.order.update({
           where: { id },
           data: {
@@ -497,7 +497,7 @@ export const confirmOrderReceipt = async (
 };
 
 /**
- * Automatically confirm orders that have been SENT for more than 48 hours.
+ * Automatically confirm orders that have been SENT for more than 7 days (168 hours).
  */
 export const autoConfirmShippedOrders = async (
   _req: Request,
@@ -505,12 +505,12 @@ export const autoConfirmShippedOrders = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(Date.now() - 168 * 60 * 60 * 1000);
 
     const result = await prisma.order.updateMany({
       where: {
         status: "SENT",
-        sentAt: { lt: fortyEightHoursAgo },
+        sentAt: { lt: sevenDaysAgo },
       },
       data: {
         status: "CONFIRMED",

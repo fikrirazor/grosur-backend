@@ -185,3 +185,49 @@ export const confirmPayment = async (
     next(error);
   }
 };
+
+/**
+ * Change order status to SENT (Dikirim).
+ */
+export const sendOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userMiddleware = (req as any).user;
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+    });
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Order not found");
+    }
+
+    if (order.status !== "PROCESSED") {
+      return sendResponse(res, 400, false, "Order must be in PROCESSED status before shipping");
+    }
+
+    // Role-based access control
+    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
+      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: {
+        status: "SENT",
+        sentAt: new Date(),
+      },
+      include: {
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    sendResponse(res, 200, true, "Order status updated to SENT successfully", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
