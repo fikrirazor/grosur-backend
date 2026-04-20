@@ -162,11 +162,25 @@ export const getOrders = async (
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 10, search, date } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { userId };
     if (status) where.status = status;
+    if (search) {
+      where.orderNumber = { contains: String(search), mode: "insensitive" };
+    }
+    if (date) {
+      const selectedDate = new Date(String(date));
+      if (!isNaN(selectedDate.getTime())) {
+        const nextDate = new Date(selectedDate);
+        nextDate.setDate(selectedDate.getDate() + 1);
+        where.createdAt = {
+          gte: selectedDate,
+          lt: nextDate,
+        };
+      }
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
