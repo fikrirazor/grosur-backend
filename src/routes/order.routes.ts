@@ -5,7 +5,7 @@ import {
   getOrderDetails,
   validateStock
 } from "../controllers/order.controller";
-import { verifyToken } from "../middleware/auth.middleware";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
