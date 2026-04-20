@@ -1,9 +1,13 @@
-import { User } from "../generated/prisma/client";
+// src/types/express.d.ts
+import { Role } from "@prisma/client";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: Omit<User, "password">;
+      user?: {
+        id: string;
+        role: Role;
+      };
     }
   }
 }

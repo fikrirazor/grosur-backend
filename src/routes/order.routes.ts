@@ -9,6 +9,7 @@ import {
 } from "../controllers/order.controller";
 import { verifyToken } from "../middleware/auth.middleware";
 import { upload } from "../middleware/upload.middleware";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
