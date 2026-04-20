@@ -1,0 +1,725 @@
+{
+  "info": {
+    "name": "Sales by Category and Product",
+    "description": "API testing for Sales Aggregation by Category, Product, and Top Selling Products (US-2.5.2)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "storeId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login as SUPER_ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data?.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('SUPER_ADMIN token saved');",
+                  "}",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sales by Category",
+      "item": [
+        {
+          "name": "Get Sales by Category (January 2024)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Has category aggregation', function () {",
+                  "    pm.expect(response.data.byCategory).to.be.an('array');",
+                  "    pm.expect(response.data.byCategory.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Each category has required fields', function () {",
+                  "    const category = response.data.byCategory[0];",
+                  "    pm.expect(category).to.have.property('categoryId');",
+                  "    pm.expect(category).to.have.property('categoryName');",
+                  "    pm.expect(category).to.have.property('quantity');",
+                  "    pm.expect(category).to.have.property('revenue');",
+                  "    pm.expect(category).to.have.property('products');",
+                  "});",
+                  "",
+                  "pm.test('Categories sorted by revenue (descending)', function () {",
+                  "    const categories = response.data.byCategory;",
+                  "    if (categories.length > 1) {",
+                  "        for (let i = 0; i < categories.length - 1; i++) {",
+                  "            pm.expect(categories[i].revenue).to.be.greaterThanOrEqual(categories[i+1].revenue);",
+                  "        }",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('=== SALES BY CATEGORY ===');",
+                  "response.data.byCategory.forEach(cat => {",
+                  "    console.log(`${cat.categoryName}: Rp ${cat.revenue.toLocaleString('id-ID')} (${cat.quantity} units, ${cat.products} products)`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sales by Category (All-Time)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Period shows All Time', function () {",
+                  "    pm.expect(response.data.summary.period).to.equal('All Time');",
+                  "});",
+                  "",
+                  "console.log('=== ALL-TIME CATEGORY SALES ===');",
+                  "response.data.byCategory.forEach(cat => {",
+                  "    console.log(`${cat.categoryName}: Rp ${cat.revenue.toLocaleString('id-ID')}`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sales by Category (Specific Store)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Filtered by storeId', function () {",
+                  "    pm.expect(response.data.summary.storeId).to.equal(pm.collectionVariables.get('storeId'));",
+                  "});",
+                  "",
+                  "console.log(`=== CATEGORY SALES FOR STORE: ${response.data.summary.storeId} ===`);",
+                  "response.data.byCategory.forEach(cat => {",
+                  "    console.log(`${cat.categoryName}: Rp ${cat.revenue.toLocaleString('id-ID')} (${cat.quantity} units)`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?storeId={{storeId}}&month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "{{storeId}}"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sales by Product",
+      "item": [
+        {
+          "name": "Get Sales by Product (January 2024)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Has product aggregation', function () {",
+                  "    pm.expect(response.data.byProduct).to.be.an('array');",
+                  "    pm.expect(response.data.byProduct.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Each product has required fields', function () {",
+                  "    const product = response.data.byProduct[0];",
+                  "    pm.expect(product).to.have.property('productId');",
+                  "    pm.expect(product).to.have.property('productName');",
+                  "    pm.expect(product).to.have.property('categoryId');",
+                  "    pm.expect(product).to.have.property('categoryName');",
+                  "    pm.expect(product).to.have.property('quantity');",
+                  "    pm.expect(product).to.have.property('revenue');",
+                  "    pm.expect(product).to.have.property('orders');",
+                  "});",
+                  "",
+                  "pm.test('Products sorted by revenue (descending)', function () {",
+                  "    const products = response.data.byProduct;",
+                  "    if (products.length > 1) {",
+                  "        for (let i = 0; i < products.length - 1; i++) {",
+                  "            pm.expect(products[i].revenue).to.be.greaterThanOrEqual(products[i+1].revenue);",
+                  "        }",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('=== SALES BY PRODUCT ===');",
+                  "response.data.byProduct.forEach(prod => {",
+                  "    console.log(`${prod.productName}: Rp ${prod.revenue.toLocaleString('id-ID')} (${prod.quantity} units, ${prod.orders} orders)`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sales by Product with Category Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Products include category information', function () {",
+                  "    const product = response.data.byProduct[0];",
+                  "    pm.expect(product).to.have.property('categoryId');",
+                  "    pm.expect(product).to.have.property('categoryName');",
+                  "});",
+                  "",
+                  "// Group products by category",
+                  "const byCat = {};",
+                  "response.data.byProduct.forEach(prod => {",
+                  "    if (!byCat[prod.categoryName]) {",
+                  "        byCat[prod.categoryName] = [];",
+                  "    }",
+                  "    byCat[prod.categoryName].push(prod);",
+                  "});",
+                  "",
+                  "console.log('=== PRODUCTS GROUPED BY CATEGORY ===');",
+                  "Object.keys(byCat).forEach(catName => {",
+                  "    console.log(`\\n${catName}:`);",
+                  "    byCat[catName].forEach(prod => {",
+                  "        console.log(`  - ${prod.productName}: ${prod.quantity} units`);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Top Selling Products",
+      "item": [
+        {
+          "name": "Get Top 10 Selling Products (By Quantity)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Has top selling products', function () {",
+                  "    pm.expect(response.data.topSellingProducts).to.be.an('array');",
+                  "    pm.expect(response.data.topSellingProducts.length).to.be.greaterThan(0);",
+                  "    pm.expect(response.data.topSellingProducts.length).to.be.lessThanOrEqual(10);",
+                  "});",
+                  "",
+                  "pm.test('Each top product has required fields', function () {",
+                  "    const product = response.data.topSellingProducts[0];",
+                  "    pm.expect(product).to.have.property('productId');",
+                  "    pm.expect(product).to.have.property('productName');",
+                  "    pm.expect(product).to.have.property('quantity');",
+                  "    pm.expect(product).to.have.property('revenue');",
+                  "    pm.expect(product).to.have.property('transactions');",
+                  "});",
+                  "",
+                  "pm.test('Top products sorted by quantity (descending)', function () {",
+                  "    const products = response.data.topSellingProducts;",
+                  "    if (products.length > 1) {",
+                  "        for (let i = 0; i < products.length - 1; i++) {",
+                  "            pm.expect(products[i].quantity).to.be.greaterThanOrEqual(products[i+1].quantity);",
+                  "        }",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('=== TOP 10 SELLING PRODUCTS (By Quantity) ===');",
+                  "response.data.topSellingProducts.forEach((prod, idx) => {",
+                  "    console.log(`${idx + 1}. ${prod.productName}: ${prod.quantity} units (Rp ${prod.revenue.toLocaleString('id-ID')}, ${prod.transactions} transactions)`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Top Selling Products (All-Time)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('=== ALL-TIME TOP SELLING PRODUCTS ===');",
+                  "response.data.topSellingProducts.forEach((prod, idx) => {",
+                  "    console.log(`${idx + 1}. ${prod.productName}: ${prod.quantity} units`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Compare Top Products vs Revenue Leaders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "const topByQty = response.data.topSellingProducts;",
+                  "const topByRevenue = response.data.byProduct;",
+                  "",
+                  "console.log('=== COMPARISON: Top by Quantity vs Top by Revenue ===');",
+                  "console.log('\\nTop by Quantity:');",
+                  "topByQty.slice(0, 3).forEach((prod, idx) => {",
+                  "    console.log(`${idx + 1}. ${prod.productName}: ${prod.quantity} units`);",
+                  "});",
+                  "",
+                  "console.log('\\nTop by Revenue:');",
+                  "topByRevenue.slice(0, 3).forEach((prod, idx) => {",
+                  "    console.log(`${idx + 1}. ${prod.productName}: Rp ${prod.revenue.toLocaleString('id-ID')}`);",
+                  "});",
+                  "",
+                  "// Check if #1 by quantity is different from #1 by revenue",
+                  "if (topByQty.length > 0 && topByRevenue.length > 0) {",
+                  "    const qtyLeader = topByQty[0].productName;",
+                  "    const revLeader = topByRevenue[0].productName;",
+                  "    console.log(`\\nQuantity Leader: ${qtyLeader}`);",
+                  "    console.log(`Revenue Leader: ${revLeader}`);",
+                  "    if (qtyLeader !== revLeader) {",
+                  "        console.log('⚠️ Different leaders! High-volume low-price vs low-volume high-price strategy.');",
+                  "    } else {",
+                  "        console.log('✅ Same leader in both metrics!');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Store Admin View",
+      "item": [
+        {
+          "name": "Login as STORE_ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data?.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('STORE_ADMIN token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"storeadmin@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Category Sales (Auto-Scoped to Own Store)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Store admin sees only own store', function () {",
+                  "    pm.expect(response.data.summary.storeId).to.not.equal('All Stores');",
+                  "});",
+                  "",
+                  "console.log('=== STORE ADMIN: Category Sales ===');",
+                  "console.log(`Store: ${response.data.summary.storeId}`);",
+                  "response.data.byCategory.forEach(cat => {",
+                  "    console.log(`${cat.categoryName}: Rp ${cat.revenue.toLocaleString('id-ID')}`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Top Products (Store Admin View)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "console.log('=== STORE ADMIN: Top Selling Products ===');",
+                  "response.data.topSellingProducts.forEach((prod, idx) => {",
+                  "    console.log(`${idx + 1}. ${prod.productName}: ${prod.quantity} units`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "List Stores",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.length > 0) {",
+                  "    pm.collectionVariables.set('storeId', response.data[0].id);",
+                  "    console.log('Store ID:', response.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stores",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
