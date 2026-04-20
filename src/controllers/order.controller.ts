@@ -194,6 +194,17 @@ export const getOrders = async (
         take: Number(limit),
       }),
       prisma.order.count({ where }),
+      // Auto-confirm orders that have been SENT for more than 48 hours
+      prisma.order.updateMany({
+        where: {
+          status: "SENT",
+          sentAt: { lt: new Date(Date.now() - 48 * 60 * 60 * 1000) },
+        },
+        data: {
+          status: "CONFIRMED",
+          confirmedAt: new Date(),
+        },
+      }),
     ]);
 
     sendResponse(res, 200, true, "Orders retrieved", orders, {
@@ -228,6 +239,26 @@ export const getOrderDetails = async (
     });
 
     if (!order) return sendResponse(res, 404, false, "Order not found");
+
+    // Auto-confirm if this specific order is SENT and older than 48h
+    if (order.status === "SENT" && order.sentAt) {
+      const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      if (new Date(order.sentAt) < fortyEightHoursAgo) {
+        const updatedOrder = await prisma.order.update({
+          where: { id },
+          data: {
+            status: "CONFIRMED",
+            confirmedAt: new Date(),
+          },
+          include: {
+            store: true,
+            address: true,
+            items: { include: { product: { include: { images: true } } } },
+          },
+        });
+        return sendResponse(res, 200, true, "Order details retrieved (Auto-confirmed)", updatedOrder);
+      }
+    }
 
     sendResponse(res, 200, true, "Order details retrieved", order);
   } catch (error) {
@@ -408,6 +439,75 @@ export const cancelOrder = async (
     });
 
     sendResponse(res, 200, true, "Pesanan berhasil dibatalkan", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * User confirms receipt of the order.
+ * Can only confirm if status is SENT.
+ */
+export const confirmOrderReceipt = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { id } = req.params;
+
+    const order = await prisma.order.findFirst({
+      where: { id, userId },
+    });
+
+    if (!order) {
+      sendResponse(res, 404, false, "Pesanan tidak ditemukan");
+      return;
+    }
+
+    if (order.status !== "SENT") {
+      sendResponse(res, 400, false, "Pesanan belum dikirim atau sudah dikonfirmasi");
+      return;
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: "CONFIRMED",
+        confirmedAt: new Date(),
+      },
+    });
+
+    sendResponse(res, 200, true, "Pesanan telah dikonfirmasi diterima", updatedOrder);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Automatically confirm orders that have been SENT for more than 48 hours.
+ */
+export const autoConfirmShippedOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+    const result = await prisma.order.updateMany({
+      where: {
+        status: "SENT",
+        sentAt: { lt: fortyEightHoursAgo },
+      },
+      data: {
+        status: "CONFIRMED",
+        confirmedAt: new Date(),
+      },
+    });
+
+    sendResponse(res, 200, true, `${result.count} pesanan telah dikonfirmasi otomatis`);
   } catch (error) {
     next(error);
   }
