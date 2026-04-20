@@ -10,8 +10,8 @@ import {
   confirmOrderReceipt,
   autoConfirmShippedOrders
 } from "../controllers/order.controller";
-import { verifyToken } from "../middleware/auth.middleware";
-import { upload } from "../middleware/upload.middleware";
+import { upload } from "../middlewares/upload.middleware";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 

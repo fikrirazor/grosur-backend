@@ -2,12 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 
 export class AppError extends Error {
+  public errorCode?: string;
+
   constructor(
     public statusCode: number,
     public message: string,
     public isOperational = true,
+    errorCode?: string,
   ) {
     super(message);
+    this.errorCode = errorCode;
     Object.setPrototypeOf(this, AppError.prototype);
   }
 }
@@ -20,7 +24,11 @@ export const errorHandler = (
 ): void => {
   if (err instanceof ZodError) return void handleZodError(err, res);
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ success: false, message: err.message });
+    const response: any = { success: false, message: err.message };
+    if (err.errorCode) {
+      response.errorCode = err.errorCode;
+    }
+    res.status(err.statusCode).json(response);
     return;
   }
   if (err.name === "PrismaClientKnownRequestError")

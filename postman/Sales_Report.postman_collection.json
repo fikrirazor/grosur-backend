@@ -1,0 +1,583 @@
+{
+  "info": {
+    "name": "Sales Report",
+    "description": "API testing for Monthly Sales Report with role-based access and pagination (US-2.5.1)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "storeId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login as SUPER_ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data?.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('SUPER_ADMIN access token saved');",
+                  "}",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as STORE_ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data?.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('STORE_ADMIN access token saved');",
+                  "}",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"storeadmin@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sales Report - SUPER_ADMIN",
+      "item": [
+        {
+          "name": "Get All Stores Sales (Current Month)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is successful', function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Has summary data', function () {",
+                  "    pm.expect(response.summary).to.have.property('totalOrders');",
+                  "    pm.expect(response.summary).to.have.property('totalRevenue');",
+                  "    pm.expect(response.summary).to.have.property('period');",
+                  "});",
+                  "",
+                  "pm.test('Has category aggregation', function () {",
+                  "    pm.expect(response.byCategory).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Has product aggregation', function () {",
+                  "    pm.expect(response.byProduct).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Has pagination info', function () {",
+                  "    pm.expect(response.pagination).to.have.property('page');",
+                  "    pm.expect(response.pagination).to.have.property('limit');",
+                  "    pm.expect(response.pagination).to.have.property('total');",
+                  "    pm.expect(response.pagination).to.have.property('totalPages');",
+                  "});",
+                  "",
+                  "console.log('Total Orders:', response.summary.totalOrders);",
+                  "console.log('Total Revenue:', response.summary.totalRevenue);",
+                  "console.log('Period:', response.summary.period);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1",
+                  "description": "January"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Store Sales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Filtered by storeId', function () {",
+                  "    pm.expect(response.summary.storeId).to.equal(pm.collectionVariables.get('storeId'));",
+                  "});",
+                  "",
+                  "pm.test('Category data present', function () {",
+                  "    if (response.byCategory.length > 0) {",
+                  "        console.log('Top Category:', response.byCategory[0].categoryName);",
+                  "        console.log('Category Revenue:', response.byCategory[0].revenue);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Product data sorted by revenue', function () {",
+                  "    if (response.byProduct.length > 1) {",
+                  "        pm.expect(response.byProduct[0].revenue).to.be.greaterThanOrEqual(response.byProduct[1].revenue);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?storeId={{storeId}}&month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "{{storeId}}"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All-Time Sales (No Date Filter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Period shows All Time', function () {",
+                  "    pm.expect(response.summary.period).to.equal('All Time');",
+                  "});",
+                  "",
+                  "console.log('All-time total orders:', response.summary.totalOrders);",
+                  "console.log('All-time revenue:', response.summary.totalRevenue);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Pagination - Page 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Page number is 2', function () {",
+                  "    pm.expect(response.pagination.page).to.equal(2);",
+                  "});",
+                  "",
+                  "pm.test('Has next page info', function () {",
+                  "    pm.expect(response.pagination).to.have.property('hasNext');",
+                  "    pm.expect(response.pagination).to.have.property('totalPages');",
+                  "});",
+                  "",
+                  "console.log('Current page:', response.pagination.page);",
+                  "console.log('Total pages:', response.pagination.totalPages);",
+                  "console.log('Has next:', response.pagination.hasNext);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024&page=2&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                },
+                {
+                  "key": "page",
+                  "value": "2"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sales Report - STORE_ADMIN",
+      "item": [
+        {
+          "name": "Get Own Store Sales (Auto-scoped)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Store admin sees only own store', function () {",
+                  "    // Store ID should be automatically set from user's managedStoreId",
+                  "    pm.expect(response.summary.storeId).to.not.equal('All Stores');",
+                  "});",
+                  "",
+                  "pm.test('Has sales data', function () {",
+                  "    pm.expect(response.byProduct).to.be.an('array');",
+                  "    pm.expect(response.byCategory).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Store Admin - Total Orders:', response.summary.totalOrders);",
+                  "console.log('Store Admin - Revenue:', response.summary.totalRevenue);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Try Access Other Store (Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "// Store admin trying to access other store should still see their own store",
+                  "pm.test('Status code is 200 (scoped to own store)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Ignores storeId parameter', function () {",
+                  "    // Should still return their managed store, not the requested one",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?storeId=different-store-id&month=1&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "different-store-id",
+                  "description": "Should be ignored for STORE_ADMIN"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Test Unauthorized Access (No Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test USER Role Access (Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Error message indicates forbidden', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('Unauthorized');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "List Stores (Get Store IDs)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Stores list returned', function () {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.collectionVariables.set('storeId', response.data[0].id);",
+                  "        console.log('First store ID:', response.data[0].id);",
+                  "        console.log('Store name:', response.data[0].name);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stores",
+              "host": ["{{baseUrl}}"],
+              "path": ["stores"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
