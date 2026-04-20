@@ -1,0 +1,156 @@
+import prisma from "../config/database";
+import { AppError } from "../middlewares/error.middleware";
+
+export interface CreateCategoryInput {
+  name: string;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+}
+
+export const getCategories = async () => {
+  return await prisma.category.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
+};
+
+export const createCategory = async (data: CreateCategoryInput) => {
+  const { name } = data;
+
+  // Check kalau ada kategori duplikat
+  const existingCategory = await prisma.category.findFirst({
+    where: {
+      name: {
+        equals: name,
+        mode: "insensitive",
+      },
+    },
+  });
+
+  if (existingCategory) {
+    throw new AppError(
+      409,
+      `Category "${name}" already exists`,
+      true,
+      "CATEGORY_DUPLICATE",
+    );
+  }
+
+  // Generate slug from name
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  // Create category
+  const category = await prisma.category.create({
+    data: {
+      name,
+      slug,
+    },
+  });
+
+  return category;
+};
+
+export const updateCategory = async (
+  categoryId: string,
+  data: UpdateCategoryInput,
+) => {
+  // Check kalau kategori ada
+  const existingCategory = await prisma.category.findUnique({
+    where: { id: categoryId },
+  });
+
+  if (!existingCategory) {
+    throw new AppError(
+      404,
+      "Category not found",
+      true,
+      "CATEGORY_NOT_FOUND",
+    );
+  }
+
+  // Jika nama diupdate, cek kalau ada kategori duplikat
+  if (data.name && data.name !== existingCategory.name) {
+    const duplicateCategory = await prisma.category.findFirst({
+      where: {
+        name: {
+          equals: data.name,
+          mode: "insensitive",
+        },
+        id: {
+          not: categoryId,
+        },
+      },
+    });
+
+    if (duplicateCategory) {
+      throw new AppError(
+        409,
+        `Category "${data.name}" already exists`,
+        true,
+        "CATEGORY_DUPLICATE",
+      );
+    }
+  }
+
+  // Generate new slug if name changes
+  const slug = data.name
+    ? data.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+    : existingCategory.slug;
+
+  // Update category
+  const updatedCategory = await prisma.category.update({
+    where: { id: categoryId },
+    data: {
+      name: data.name,
+      slug,
+    },
+  });
+
+  return updatedCategory;
+};
+
+export const deleteCategory = async (categoryId: string) => {
+  // check kalau kategori ada
+  const existingCategory = await prisma.category.findUnique({
+    where: { id: categoryId },
+  });
+
+  if (!existingCategory) {
+    throw new AppError(
+      404,
+      "Category not found",
+      true,
+      "CATEGORY_NOT_FOUND",
+    );
+  }
+
+  // Check kalau kategori ada produk
+  const productCount = await prisma.product.count({
+    where: { categoryId },
+  });
+
+  if (productCount > 0) {
+    throw new AppError(
+      400,
+      `Cannot delete category with ${productCount} product(s). Remove or reassign products first.`,
+      true,
+      "CATEGORY_HAS_PRODUCTS",
+    );
+  }
+
+  // Delete category
+  await prisma.category.delete({
+    where: { id: categoryId },
+  });
+
+  return { success: true, message: "Category deleted successfully" };
+};
