@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { getAdminOrders, getAdminOrderDetail, confirmPayment, sendOrder, cancelOrder } from "../controllers/admin.order.controller";
+import { verifyToken, authorizeRoles } from "../middleware/auth.middleware";
 import { getAdminOrders, getAdminOrderDetail, confirmPayment, sendOrder } from "../controllers/admin.order.controller";
 import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 
@@ -11,5 +13,6 @@ router.get("/", getAdminOrders);
 router.get("/:id", getAdminOrderDetail);
 router.patch("/:id/payment", confirmPayment);
 router.patch("/:id/send", sendOrder);
+router.patch("/:id/cancel", cancelOrder);
 
 export default router;
