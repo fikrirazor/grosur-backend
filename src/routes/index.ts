@@ -18,6 +18,7 @@ import checkoutRoutes from "./checkout.routes";
 import salesRoutes from "./sales.routes";
 import reportRoutes from "./report.routes";
 import stockReportRoutes from "./stock-report.routes";
+import bannerRoutes from "./banner.routes";
 
 const router = Router();
 
@@ -51,5 +52,6 @@ router.use("/checkout", checkoutRoutes);
 router.use("/sales", salesRoutes);
 router.use("/reports", reportRoutes);
 router.use("/stock-report", stockReportRoutes);
+router.use("/banners", bannerRoutes);
 
 export default router;
