@@ -4,87 +4,29 @@ import { uploadToCloudinary } from "../utils/cloudinary";
 
 export const getBanners = async (_req: Request, res: Response) => {
   try {
-    const now = new Date();
-
-    // 1. Fetch 2 newest active discounts
-    const activeDiscounts = await prisma.discount.findMany({
-      where: {
-        isActive: true,
-        startDate: { lte: now },
-        endDate: { gte: now },
-      },
-      include: {
-        product: {
-          include: { images: { take: 1 } }
-        }
-      },
+    const banners = await prisma.banner.findMany({
+      where: { isActive: true },
       orderBy: { createdAt: "desc" },
-      take: 2,
+      take: 5,
     });
-
-    // 2. Fetch banners linked to these specific discounts
-    const discountIds = activeDiscounts.map(d => d.id);
-    const manualDiscountBanners = await prisma.banner.findMany({
-      where: {
-        isActive: true,
-        discountId: { in: discountIds }
-      }
-    });
-
-    // 3. Construct the 2 discount banners (Virtual or Custom)
-    const finalDiscountBanners = activeDiscounts.map(discount => {
-      const manualOverride = manualDiscountBanners.find(b => b.discountId === discount.id);
-      
-      if (manualOverride) return manualOverride;
-
-      // Virtual Banner Generation
-      let title = "Promo Spesial!";
-      if (discount.type === "PERCENT") title = `Diskon ${discount.value}%!`;
-      if (discount.type === "NOMINAL") title = `Potongan Rp ${Number(discount.value).toLocaleString()}!`;
-      if (discount.type === "B1G1") title = "Beli 1 Gratis 1!";
-
-      return {
-        id: `virtual-${discount.id}`,
-        title,
-        subtitle: discount.product ? `Khusus untuk ${discount.product.name}` : "Hanya di Grosur Terdekatmu",
-        imageUrl: discount.product?.images[0]?.url || null,
-        bgGradient: "bg-gradient-to-r from-orange-500 to-yellow-400",
-        contentColor: "text-white",
-        linkUrl: discount.product ? `/products/${discount.product.slug}` : "#",
-        isActive: true,
-        discountId: discount.id
-      };
-    });
-
-    // 4. Fetch up to 3 additional manual active banners (not linked to discounts)
-    const manualBanners = await prisma.banner.findMany({
-      where: { 
-        isActive: true,
-        discountId: null
-      },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    });
-
-    const combinedBanners = [...finalDiscountBanners, ...manualBanners];
-    
-    return res.status(200).json({ success: true, data: combinedBanners });
+    return res.status(200).json({ success: true, data: banners });
   } catch (error: any) {
+    console.error("GET BANNERS ERROR:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const createBanner = async (req: Request, res: Response) => {
   try {
-    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, discountId } = req.body;
+    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, showText } = req.body;
     
-    // Limit check for manual banners (non-discount)
-    if ((isActive === "true" || isActive === true) && !discountId) {
-      const activeCount = await prisma.banner.count({ where: { isActive: true, discountId: null } });
-      if (activeCount >= 3) {
+    // Check limit of 5 active manual banners
+    if (isActive === "true" || isActive === true) {
+      const activeCount = await prisma.banner.count({ where: { isActive: true } });
+      if (activeCount >= 5) {
         return res.status(400).json({ 
           success: false, 
-          message: "Maksimal 3 banner manual (non-diskon) aktif diperbolehkan. Matikan banner lain terlebih dahulu." 
+          message: "Maksimal 5 banner aktif diperbolehkan. Matikan banner lain terlebih dahulu." 
         });
       }
     }
@@ -103,7 +45,7 @@ export const createBanner = async (req: Request, res: Response) => {
         bgGradient,
         contentColor: contentColor || "text-white",
         linkUrl,
-        discountId: discountId || null,
+        showText: showText === "false" || showText === false ? false : true,
         isActive: isActive === "true" || isActive === true,
       },
     });
@@ -117,14 +59,18 @@ export const createBanner = async (req: Request, res: Response) => {
 export const updateBanner = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, discountId } = req.body;
+    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, showText } = req.body;
 
-    if ((isActive === "true" || isActive === true) && !discountId) {
+    // If trying to activate, check limit
+    if (isActive === "true" || isActive === true) {
       const currentBanner = await prisma.banner.findUnique({ where: { id } });
       if (currentBanner && !currentBanner.isActive) {
-        const activeCount = await prisma.banner.count({ where: { isActive: true, discountId: null } });
-        if (activeCount >= 3) {
-          return res.status(400).json({ success: false, message: "Maksimal 3 banner manual aktif diperbolehkan." });
+        const activeCount = await prisma.banner.count({ where: { isActive: true } });
+        if (activeCount >= 5) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Maksimal 5 banner aktif diperbolehkan." 
+          });
         }
       }
     }
@@ -144,7 +90,7 @@ export const updateBanner = async (req: Request, res: Response) => {
         bgGradient,
         contentColor,
         linkUrl,
-        discountId: discountId !== undefined ? (discountId || null) : undefined,
+        showText: showText !== undefined ? (showText === "true" || showText === true) : undefined,
         isActive: isActive !== undefined ? (isActive === "true" || isActive === true) : undefined,
       },
     });
@@ -176,21 +122,7 @@ export const getAllBannersAdmin = async (_req: Request, res: Response) => {
   }
 };
 
+// Kept for UI compatibility but simplified
 export const getActiveDiscounts = async (_req: Request, res: Response) => {
-  try {
-    const now = new Date();
-    const discounts = await prisma.discount.findMany({
-      where: { 
-        isActive: true,
-        startDate: { lte: now },
-        endDate: { gte: now },
-      },
-      include: { product: true },
-      orderBy: { createdAt: "desc" }
-    });
-    return res.status(200).json({ success: true, data: discounts });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
+  return res.status(200).json({ success: true, data: [] });
 };
-
