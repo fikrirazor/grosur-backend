@@ -449,3 +449,26 @@ model ActionLog {
   @@index([action])
   @@index([createdAt])
 }
+
+// ============================================
+// PROMOTIONAL BANNERS
+// ============================================
+
+model Banner {
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String?
+  imageUrl     String?  // Optional if using gradient
+  bgGradient   String?  // e.g. "bg-gradient-to-r from-primary to-accent"
+  contentColor String   @default("text-white")
+  linkUrl      String?
+  showText     Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  discountId   String?  // Linked discount if this is an override
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([discountId])
+}
+
