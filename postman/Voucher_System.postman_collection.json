@@ -1,0 +1,313 @@
+{
+  "info": {
+    "name": "Voucher System",
+    "description": "Validate and use vouchers with atomic transaction\n\nCredentials:\n- USER: user@example.com / Password123!\n\nSeed Data:\n- WELCOME25: 25% off (max 50k), min spend 100k\n- BERAS10K: Rp 10,000 off for Beras, qty 3\n- FREESHIP: Rp 15,000 shipping discount, qty 2\n- USED50: Already used voucher (for testing)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login as USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signin",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signin"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "  pm.collectionVariables.set('access_token', response.data.token);",
+                  "  console.log('USER token saved');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Voucher Operations",
+      "item": [
+        {
+          "name": "Get User Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vouchers",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers"]
+            }
+          }
+        },
+        {
+          "name": "Validate Percentage Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME25\",\n  \"cartTotal\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Validate Product-Specific Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BERAS10K\",\n  \"cartTotal\": 75000,\n  \"productId\": \"b4b2fd3e-baa5-4429-b3e1-709af8363509\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Validate Shipping Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FREESHIP\",\n  \"cartTotal\": 100000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Use Voucher (Atomic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME25\",\n  \"orderId\": \"order-uuid-here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/use",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "use"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Test Expired Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"EXPIRED123\",\n  \"cartTotal\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Test Used Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"USED50\",\n  \"cartTotal\": 250000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Test Min Spend Not Met",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME25\",\n  \"cartTotal\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Test Invalid Product Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BERAS10K\",\n  \"cartTotal\": 75000,\n  \"productId\": \"wrong-product-uuid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Test Voucher Not Owned",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"OTHERUSER50\",\n  \"cartTotal\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vouchers/validate",
+              "host": ["{{base_url}}"],
+              "path": ["vouchers", "validate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "Get Products (Find IDs)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?storeId=9e30396f-08b5-4c15-8b99-35b9f14e1f98&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "storeId",
+                  "value": "9e30396f-08b5-4c15-8b99-35b9f14e1f98"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

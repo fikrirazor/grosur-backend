@@ -13,10 +13,12 @@ export const sendResponse = <T>(
   message: string,
   data?: T,
   pagination?: PaginationInfo,
+  code?: string,
 ): void => {
   res.status(statusCode).json({
     success,
     message,
+    ...(code !== undefined && { code }),
     ...(data !== undefined && { data }),
     ...(pagination !== undefined && { pagination }),
   });

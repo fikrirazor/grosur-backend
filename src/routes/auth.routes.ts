@@ -1,22 +1,35 @@
+// src/routes/auth.routes.ts
 import { Router } from "express";
-import { signUp, signIn } from "../controllers/auth.controller";
-import { validateRequest } from "../middleware/validation.middleware";
+import {
+    signIn,
+    signUp,
+    verifyHandler,
+    forgotPasswordHandler,
+    resetPasswordHandler,
+    googleLogin,
+    logout,
+    getMe
+} from "../controllers/auth.controller";
+import { validateRequest } from "../middlewares/validation.middleware";
 import { signUpSchema, signInSchema } from "../validations/auth.validation";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-/**
- * @route   POST /api/auth/signup
- * @desc    Register a new user
- * @access  Public
- */
-router.post("/signup", validateRequest(signUpSchema), signUp);
-
-/**
- * @route   POST /api/auth/signin
- * @desc    Sign in a user
- * @access  Public
- */
+// Standard Auth
 router.post("/signin", validateRequest(signInSchema), signIn);
+router.post("/signup", validateRequest(signUpSchema), signUp);
+router.post("/login", signIn); // Keep /login as fallback if needed
+router.post("/register", signUp); // Keep /register as fallback
+
+// Verification & Password Reset
+router.post("/verify", verifyHandler);
+router.post("/forgot-password", forgotPasswordHandler);
+router.post("/reset-password", resetPasswordHandler);
+
+// Social & Session
+router.post("/google", googleLogin);
+router.post("/logout", logout);
+router.get("/me", verifyToken, getMe);
 
 export default router;

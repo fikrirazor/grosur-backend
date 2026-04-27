@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output = "../src/generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -13,6 +13,11 @@ datasource db {
 // ============================================
 // ENUMS
 // ============================================
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
 
 enum Role {
   USER
@@ -60,43 +65,54 @@ enum VerificationTokenType {
 }
 
 // ============================================
+// FEATURE 1 (ANDREAS)
+// ============================================
 // USER & AUTH
 // ============================================
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String?
-  name          String?
-  phone         String?
-  photo         String?
-  role          Role      @default(USER)
-  isVerified    Boolean   @default(false)
-  referralCode  String    @unique @default(uuid())
-  referredBy    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String?
+  name         String?
+  phone        String?
+  photo        String?
+  role         Role         @default(USER)
+  isVerified   Boolean      @default(false)
+  referralCode String       @unique @default(uuid())
+  referredBy   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  provider     AuthProvider @default(CREDENTIALS)
 
   // Relations
-  addresses     Address[]
-  carts         Cart[]
-  orders        Order[]
-  vouchers      Voucher[]
-  referrals     User[]    @relation("ReferredUsers")
-  referrer      User?     @relation("ReferredUsers", fields: [referredBy], references: [id])
+  addresses          Address[]
+  carts              Cart[]
+  orders             Order[]
+  vouchers           Voucher[]
+  referrals          User[]              @relation("ReferredUsers")
+  referrer           User?               @relation("ReferredUsers", fields: [referredBy], references: [id])
   verificationTokens VerificationToken[]
-  cronJobLogs   CronJobLog[]
+  cronJobLogs        CronJobLog[]
+  actionLogs         ActionLog[]
+
+  managedStoreId String?
+  managedStore   Store?  @relation(fields: [managedStoreId], references: [id])
+
+  @@index([email])
+  @@index([role])
+  @@index([isVerified])
 }
 
 model VerificationToken {
-  id        String              @id @default(uuid())
-  token     String              @unique
+  id        String                @id @default(uuid())
+  token     String                @unique
   type      VerificationTokenType
   userId    String
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
-  isUsed    Boolean             @default(false)
-  createdAt DateTime            @default(now())
+  isUsed    Boolean               @default(false)
+  createdAt DateTime              @default(now())
 }
 
 // ============================================
@@ -104,13 +120,12 @@ model VerificationToken {
 // ============================================
 
 model Address {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name       String
-  phone      String
-  province   String
-  city       String
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  phone  String
+
   district   String
   detail     String
   postalCode String?
@@ -120,9 +135,18 @@ model Address {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  orders     Order[]
+  // Keep these for display purposes (e.g., "DI Yogyakarta", "Bantul")
+  province String
+  city     String
+
+  // ADD THESE for RajaOngkir API calls (e.g., "5", "39")
+  provinceId String?
+  cityId     String?
+  orders Order[]
 }
 
+// ============================================
+// FEATURE 2 (FIKRI)
 // ============================================
 // STORE & LOCATION
 // ============================================
@@ -138,16 +162,17 @@ model Store {
   latitude    Float
   longitude   Float
   maxRadius   Float    @default(50) // km
+  isMain      Boolean  @default(false)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  admins      User[]
-  stocks      Stock[]
-  carts       Cart[]
-  orders      Order[]
-  discounts   Discount[]
+  admins        User[]
+  stocks        Stock[]
+  carts         Cart[]
+  orders        Order[]
+  discounts     Discount[]
   shippingCosts ShippingCost[]
 }
 
@@ -156,13 +181,13 @@ model Store {
 // ============================================
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  slug      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  products  Product[]
+  products Product[]
 }
 
 model Product {
@@ -178,12 +203,16 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  images      ProductImage[]
-  stocks      Stock[]
-  carts       Cart[]
-  orderItems  OrderItem[]
-  discounts   Discount[]
-  vouchers    Voucher[]
+  images     ProductImage[]
+  stocks     Stock[]
+  carts      Cart[]
+  orderItems OrderItem[]
+  discounts  Discount[]
+  vouchers   Voucher[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([slug])
 }
 
 model ProductImage {
@@ -208,11 +237,13 @@ model Stock {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  journals  StockJournal[]
-  carts     Cart[]
+  journals   StockJournal[]
+  carts      Cart[]
   orderItems OrderItem[]
 
   @@unique([productId, storeId])
+  @@index([productId])
+  @@index([storeId])
 }
 
 model StockJournal {
@@ -225,49 +256,62 @@ model StockJournal {
   type      StockJournalType
   reason    String?
   orderId   String?
+  order     Order?           @relation(fields: [orderId], references: [id])
   userId    String
   createdAt DateTime         @default(now())
+
+  @@index([stockId])
+  @@index([createdAt])
+  @@index([type])
 }
 
+// ============================================
+// FEATURE 3 (ENDANG)
 // ============================================
 // DISCOUNT & VOUCHER
 // ============================================
 
 model Discount {
-  id          String      @id @default(uuid())
+  id          String       @id @default(uuid())
   storeId     String
-  store       Store       @relation(fields: [storeId], references: [id])
+  store       Store        @relation(fields: [storeId], references: [id])
   productId   String?
-  product     Product?    @relation(fields: [productId], references: [id])
+  product     Product?     @relation(fields: [productId], references: [id])
   type        DiscountType
-  value       Decimal     @db.Decimal(10, 2)
-  minSpend    Decimal?    @db.Decimal(10, 2)
-  maxDiscount Decimal?    @db.Decimal(10, 2)
-  buyQty      Int?        // For B1G1
-  freeQty     Int?        // For B1G1
-  isActive    Boolean     @default(true)
+  value       Decimal      @db.Decimal(10, 2)
+  minSpend    Decimal?     @db.Decimal(10, 2)
+  maxDiscount Decimal?     @db.Decimal(10, 2)
+  buyQty      Int? // For B1G1
+  freeQty     Int? // For B1G1
+  isActive    Boolean      @default(true)
   startDate   DateTime
   endDate     DateTime
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Voucher {
-  id          String     @id @default(uuid())
-  code        String     @unique
+  id          String      @id @default(uuid())
+  code        String      @unique
   userId      String
-  user        User       @relation(fields: [userId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
   productId   String?
-  product     Product?   @relation(fields: [productId], references: [id])
+  product     Product?    @relation(fields: [productId], references: [id])
   type        VoucherType
-  value       Decimal    @db.Decimal(10, 2)
-  maxDiscount Decimal?   @db.Decimal(10, 2)
-  minSpend    Decimal?   @db.Decimal(10, 2)
+  value       Decimal     @db.Decimal(10, 2)
+  maxDiscount Decimal?    @db.Decimal(10, 2)
+  minSpend    Decimal?    @db.Decimal(10, 2)
+  qty         Int         @default(1) // Available quantity
   expiryDate  DateTime
-  isUsed      Boolean    @default(false)
+  isUsed      Boolean     @default(false)
   usedAt      DateTime?
   orderId     String?
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+  @@index([code])
+  @@index([isUsed])
+  @@index([expiryDate])
 }
 
 // ============================================
@@ -275,18 +319,24 @@ model Voucher {
 // ============================================
 
 model Cart {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
   storeId   String
-  store     Store    @relation(fields: [storeId], references: [id])
+  store     Store   @relation(fields: [storeId], references: [id])
+
+  stockId String
+  stock   Stock  @relation(fields: [stockId], references: [id])
+
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, productId, storeId])
+  @@index([userId])
+  @@index([storeId])
 }
 
 // ============================================
@@ -294,47 +344,53 @@ model Cart {
 // ============================================
 
 model Order {
-  id              String        @id @default(uuid())
-  orderNumber     String        @unique
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
-  storeId         String
-  store           Store         @relation(fields: [storeId], references: [id])
-  addressId       String
-  address         Address       @relation(fields: [addressId], references: [id])
-  status          OrderStatus   @default(WAITING_PAYMENT)
-  paymentStatus   PaymentStatus @default(PENDING)
-  subtotal        Decimal       @db.Decimal(10, 2)
-  shippingCost    Decimal       @db.Decimal(10, 2)
-  discountAmount  Decimal       @db.Decimal(10, 2)
-  totalAmount     Decimal       @db.Decimal(10, 2)
-  paymentProof    String?
-  paymentMethod   String?
-  notes           String?
-  createdAt       DateTime      @default(now())
-  paidAt          DateTime?
-  sentAt          DateTime?
-  confirmedAt     DateTime?
-  cancelledAt     DateTime?
-  cancelledBy     String?       // USER or ADMIN
-  cancelReason    String?
+  id             String        @id @default(uuid())
+  orderNumber    String        @unique
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  storeId        String
+  store          Store         @relation(fields: [storeId], references: [id])
+  addressId      String
+  address        Address       @relation(fields: [addressId], references: [id])
+  status         OrderStatus   @default(WAITING_PAYMENT)
+  paymentStatus  PaymentStatus @default(PENDING)
+  subtotal       Decimal       @db.Decimal(10, 2)
+  shippingCost   Decimal       @db.Decimal(10, 2)
+  discountAmount Decimal       @db.Decimal(10, 2)
+  totalAmount    Decimal       @db.Decimal(10, 2)
+  paymentProof   String?
+  paymentMethod  String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+  sentAt         DateTime?
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelledBy    String? // USER or ADMIN
+  cancelReason   String?
 
-  items           OrderItem[]
-  stockJournals   StockJournal[]
+  items         OrderItem[]
+  stockJournals StockJournal[]
+
+  @@index([userId])
+  @@index([storeId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderNumber])
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
   stockId   String
-  stock     Stock    @relation(fields: [stockId], references: [id])
+  stock     Stock   @relation(fields: [stockId], references: [id])
   quantity  Int
-  price     Decimal  @db.Decimal(10, 2)
-  discount  Decimal  @db.Decimal(10, 2) @default(0)
-  subtotal  Decimal  @db.Decimal(10, 2)
+  price     Decimal @db.Decimal(10, 2)
+  discount  Decimal @default(0) @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
 }
 
 // ============================================
@@ -345,12 +401,12 @@ model ShippingCost {
   id            String   @id @default(uuid())
   storeId       String
   store         Store    @relation(fields: [storeId], references: [id])
-  destination   String   // City/District
+  destination   String // City/District
   province      String
   city          String
   district      String
-  courier       String   // JNE, POS, etc
-  service       String   // REG, OKE, YES
+  courier       String // JNE, POS, etc
+  service       String // REG, OKE, YES
   cost          Decimal  @db.Decimal(10, 2)
   estimatedDays Int?
   createdAt     DateTime @default(now())
@@ -364,50 +420,55 @@ model ShippingCost {
 // ============================================
 
 model CronJobLog {
-  id        String   @id @default(uuid())
-  jobName   String
+  id         String   @id @default(uuid())
+  jobName    String
   executedBy String?
-  status    String   // SUCCESS, FAILED
-  message   String?
+  status     String // SUCCESS, FAILED
+  message    String?
   executedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 // ============================================
-// INDEXES FOR PERFORMANCE
+// AUDIT LOGGING
 // ============================================
 
-// User indexes
-@@index([User.email])
-@@index([User.role])
-@@index([User.isVerified])
+model ActionLog {
+  id         String   @id @default(uuid())
+  action     String // e.g., "CREATE_STORE_ADMIN", "UPDATE_STORE_ADMIN"
+  targetId   String? // The ID of the record being changed
+  targetType String? // e.g., "User", "Store"
+  details    Json? // Additional information about the action
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  createdAt  DateTime @default(now())
 
-// Order indexes
-@@index([Order.userId])
-@@index([Order.storeId])
-@@index([Order.status])
-@@index([Order.createdAt])
-@@index([Order.orderNumber])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
 
-// Product indexes
-@@index([Product.categoryId])
-@@index([Product.isActive])
-@@index([Product.slug])
+// ============================================
+// PROMOTIONAL BANNERS
+// ============================================
 
-// Stock indexes
-@@index([Stock.productId])
-@@index([Stock.storeId])
+model Banner {
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String?
+  imageUrl     String?  // Optional if using gradient
+  bgGradient   String?  // e.g. "bg-gradient-to-r from-primary to-accent"
+  contentColor String   @default("text-white")
+  linkUrl      String?
+  showText     Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  discountId   String?  // Linked discount if this is an override
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-// StockJournal indexes
-@@index([StockJournal.stockId])
-@@index([StockJournal.createdAt])
-@@index([StockJournal.type])
+  @@index([isActive])
+  @@index([discountId])
+}
 
-// Voucher indexes
-@@index([Voucher.userId])
-@@index([Voucher.code])
-@@index([Voucher.isUsed])
-@@index([Voucher.expiryDate])
-
-// Cart indexes
-@@index([Cart.userId])
-@@index([Cart.storeId])
