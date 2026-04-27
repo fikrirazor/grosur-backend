@@ -284,6 +284,174 @@ async function main() {
     where: { productId_storeId: { productId: prodEgg.id, storeId: storeSurabaya.id } },
   });
 
+  // 7.5. Create COMPREHENSIVE STOCK JOURNALS for Report Testing (Jan-Apr 2026)
+  // This will create 30+ journals across all products and stores
+  
+  // Get all stock records
+  const allStocks = await prisma.stock.findMany({
+    include: {
+      product: { select: { id: true, name: true } },
+      store: { select: { id: true, name: true } },
+    },
+  });
+
+  let journalCount = 0;
+
+  // January 2026 - Initial stocks and first sales
+  for (const stock of allStocks) {
+    // IN: Initial stock
+    await prisma.stockJournal.create({
+      data: {
+        stockId: stock.id,
+        oldQty: 0,
+        newQty: stock.quantity,
+        change: stock.quantity,
+        type: "IN",
+        reason: "Initial stock January 2026",
+        userId: admin.id,
+        createdAt: new Date(`2026-01-05T08:00:00Z`),
+      },
+    });
+    journalCount++;
+
+    // OUT: Some sales (20% of stock)
+    const janOutQty = Math.floor(stock.quantity * 0.2);
+    if (janOutQty > 0) {
+      await prisma.stockJournal.create({
+        data: {
+          stockId: stock.id,
+          oldQty: stock.quantity,
+          newQty: stock.quantity - janOutQty,
+          change: -janOutQty,
+          type: "OUT",
+          reason: "Sales January 2026",
+          userId: user.id,
+          createdAt: new Date(`2026-01-20T14:00:00Z`),
+        },
+      });
+      journalCount++;
+    }
+  }
+
+  // February 2026 - Restocks and sales
+  for (const stock of allStocks) {
+    const currentQty = stock.quantity - Math.floor(stock.quantity * 0.2);
+    
+    // IN: Restock (30% of original)
+    const febInQty = Math.floor(stock.quantity * 0.3);
+    await prisma.stockJournal.create({
+      data: {
+        stockId: stock.id,
+        oldQty: currentQty,
+        newQty: currentQty + febInQty,
+        change: febInQty,
+        type: "IN",
+        reason: "Restock February 2026",
+        userId: storeAdmin.id,
+        createdAt: new Date(`2026-02-10T09:00:00Z`),
+      },
+    });
+    journalCount++;
+
+    // OUT: Sales (15% of original)
+    const febOutQty = Math.floor(stock.quantity * 0.15);
+    if (febOutQty > 0) {
+      await prisma.stockJournal.create({
+        data: {
+          stockId: stock.id,
+          oldQty: currentQty + febInQty,
+          newQty: currentQty + febInQty - febOutQty,
+          change: -febOutQty,
+          type: "OUT",
+          reason: "Sales February 2026",
+          userId: user.id,
+          createdAt: new Date(`2026-02-25T16:00:00Z`),
+        },
+      });
+      journalCount++;
+    }
+  }
+
+  // March 2026 - More activity
+  for (const stock of allStocks) {
+    const currentQtyAfterFeb = stock.quantity - Math.floor(stock.quantity * 0.2) + Math.floor(stock.quantity * 0.3) - Math.floor(stock.quantity * 0.15);
+    
+    // IN: Restock (25% of original)
+    const marchInQty = Math.floor(stock.quantity * 0.25);
+    await prisma.stockJournal.create({
+      data: {
+        stockId: stock.id,
+        oldQty: currentQtyAfterFeb,
+        newQty: currentQtyAfterFeb + marchInQty,
+        change: marchInQty,
+        type: "IN",
+        reason: "Restock March 2026",
+        userId: admin.id,
+        createdAt: new Date(`2026-03-08T10:00:00Z`),
+      },
+    });
+    journalCount++;
+
+    // OUT: Sales (20% of original)
+    const marchOutQty = Math.floor(stock.quantity * 0.2);
+    if (marchOutQty > 0) {
+      await prisma.stockJournal.create({
+        data: {
+          stockId: stock.id,
+          oldQty: currentQtyAfterFeb + marchInQty,
+          newQty: currentQtyAfterFeb + marchInQty - marchOutQty,
+          change: -marchOutQty,
+          type: "OUT",
+          reason: "Sales March 2026",
+          userId: user.id,
+          createdAt: new Date(`2026-03-22T13:00:00Z`),
+        },
+      });
+      journalCount++;
+    }
+  }
+
+  // April 2026 - Current month activity
+  for (const stock of allStocks) {
+    const currentQtyAfterMarch = stock.quantity - Math.floor(stock.quantity * 0.2) + Math.floor(stock.quantity * 0.3) - Math.floor(stock.quantity * 0.15) + Math.floor(stock.quantity * 0.25) - Math.floor(stock.quantity * 0.2);
+    
+    // IN: Restock (20% of original)
+    const aprilInQty = Math.floor(stock.quantity * 0.2);
+    await prisma.stockJournal.create({
+      data: {
+        stockId: stock.id,
+        oldQty: currentQtyAfterMarch,
+        newQty: currentQtyAfterMarch + aprilInQty,
+        change: aprilInQty,
+        type: "IN",
+        reason: "Restock April 2026",
+        userId: storeAdmin.id,
+        createdAt: new Date(`2026-04-05T08:00:00Z`),
+      },
+    });
+    journalCount++;
+
+    // OUT: Sales (10% of original)
+    const aprilOutQty = Math.floor(stock.quantity * 0.1);
+    if (aprilOutQty > 0) {
+      await prisma.stockJournal.create({
+        data: {
+          stockId: stock.id,
+          oldQty: currentQtyAfterMarch + aprilInQty,
+          newQty: currentQtyAfterMarch + aprilInQty - aprilOutQty,
+          change: -aprilOutQty,
+          type: "OUT",
+          reason: "Sales April 2026",
+          userId: user.id,
+          createdAt: new Date(`2026-04-18T15:00:00Z`),
+        },
+      });
+      journalCount++;
+    }
+  }
+
+  console.log(`✅ Created ${journalCount} stock journals for ${allStocks.length} products across all stores (Jan-Apr 2026)`);
+
   // 10. Create SAMPLE DISCOUNTS
   // Jakarta Discounts
   await prisma.discount.create({
