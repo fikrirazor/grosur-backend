@@ -9,7 +9,8 @@ import {
     updateStore, 
     deleteStore, 
     assignStoreAdmin,
-    getStores
+    getStores,
+    setMainStore
 } from "../controllers/store.controller";
 import { verifyToken, requireRole } from "../middlewares/auth.middleware";
 import { Role } from "../generated/prisma";
@@ -29,5 +30,7 @@ router.post("/", verifyToken, requireRole([Role.SUPER_ADMIN]), createStore);
 router.patch("/:id", verifyToken, requireRole([Role.SUPER_ADMIN]), updateStore);
 router.delete("/:id", verifyToken, requireRole([Role.SUPER_ADMIN]), deleteStore);
 router.patch("/:id/assign", verifyToken, requireRole([Role.SUPER_ADMIN]), assignStoreAdmin);
+router.patch("/:id/set-main", verifyToken, requireRole([Role.SUPER_ADMIN]), setMainStore);
+
 
 export default router;
