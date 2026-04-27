@@ -77,7 +77,7 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
   });
 
   // Manually attach user since the relation is missing in prisma schema
-  const userIds = [...new Set(journals.map(j => j.userId).filter(Boolean))];
+  const userIds = [...new Set(journals.map((j: any) => j.userId).filter(Boolean))];
   let users: any[] = [];
   if (userIds.length > 0) {
     users = await prisma.user.findMany({
@@ -86,7 +86,7 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
     });
   }
 
-  return journals.map(journal => ({
+  return journals.map((journal: any) => ({
     ...journal,
     user: users.find(u => u.id === journal.userId) || null,
   }));

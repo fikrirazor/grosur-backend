@@ -148,7 +148,7 @@ export const updateStock = async (data: UpdateStockInput) => {
   }
 
   // Update stock and create journal entry in transaction
-  const updatedStock = await prisma.$transaction(async (tx) => {
+  const updatedStock = await prisma.$transaction(async (tx: any) => {
     // Update stock quantity
     const updated = await tx.stock.update({
       where: {
@@ -200,7 +200,7 @@ export const transferStock = async (data: TransferStockInput) => {
   const sourceStock = await validateSourceStock(productId, fromStoreId, quantity);
 
   // Execute atomic transfer
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     // 1. Reduce source stock
     const sourceOldQty = sourceStock.quantity;
     const sourceNewQty = sourceOldQty - quantity;

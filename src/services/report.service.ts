@@ -62,21 +62,21 @@ export const getStockSummaryReport = async (
   });
 
   // Group journals by stockId
-  const journalsByStock = allRelevantJournals.reduce((acc, j) => {
+  const journalsByStock = allRelevantJournals.reduce((acc: any, j: any) => {
     if (!acc[j.stockId]) acc[j.stockId] = [];
     acc[j.stockId].push(j);
     return acc;
   }, {} as Record<string, typeof allRelevantJournals>);
 
-  const reportData = stocks.map((stock) => {
+  const reportData = stocks.map((stock: any) => {
     const journals = journalsByStock[stock.id] || [];
     
     // journals are sorted by createdAt DESC
-    const journalsInMonth = journals.filter(j => j.createdAt >= startDate && j.createdAt <= endDate);
+    const journalsInMonth = journals.filter((j: any) => j.createdAt >= startDate && j.createdAt <= endDate);
     
     let totalIn = 0;
     let totalOut = 0;
-    journalsInMonth.forEach((j) => {
+    journalsInMonth.forEach((j: any) => {
       if (j.change > 0) totalIn += j.change;
       else totalOut += Math.abs(j.change);
     });
@@ -173,15 +173,15 @@ export const getStockDetailReport = async (
   ]);
 
   // Manually fetch user names (Actor)
-  const userIds = [...new Set(journals.map(j => j.userId).filter(Boolean))];
+  const userIds = [...new Set(journals.map((j: any) => j.userId).filter(Boolean))];
   const users = await prisma.user.findMany({
     where: { id: { in: userIds as string[] } },
     select: { id: true, name: true }
   });
 
-  const formattedData = journals.map(j => ({
+  const formattedData = journals.map((j: any) => ({
     ...j,
-    userName: users.find(u => u.id === j.userId)?.name || "System",
+    userName: users.find((u: any) => u.id === j.userId)?.name || "System",
   }));
 
   return {

@@ -129,7 +129,7 @@ export const validateVoucher = async (data: ValidateVoucherInput) => {
 
 export const useVoucher = async (voucherCode: string, _userId: string, orderId: string) => {
   // Atomic transaction to prevent race condition
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     // Find voucher with lock
     const voucher = await tx.voucher.findUnique({
       where: { code: voucherCode },

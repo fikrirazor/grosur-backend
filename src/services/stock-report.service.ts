@@ -208,7 +208,7 @@ export const getStockReport = async (
       where: { storeId: store.storeId },
       select: { quantity: true },
     });
-    store.finalStock = stocks.reduce((sum, s) => sum + s.quantity, 0);
+    store.finalStock = stocks.reduce((sum: number, s: any) => sum + s.quantity, 0);
   }
 
   // Build summary

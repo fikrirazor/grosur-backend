@@ -80,7 +80,7 @@ const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
     }
   }
 
-  orders.forEach((order) => {
+  orders.forEach((order: any) => {
     const label = order.createdAt.toLocaleString("id-ID", { month: "short", year: "2-digit" });
     if (monthsMap.has(label)) {
       const data = monthsMap.get(label);
@@ -246,15 +246,15 @@ export const getSalesReport = async (
   const byCategory = aggregateByCategory(orders);
   
   // Calculate total summary stats
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
-  const totalDiscount = orders.reduce((sum, o) => sum + Number(o.discountAmount), 0);
+  const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.totalAmount), 0);
+  const totalDiscount = orders.reduce((sum: number, o: any) => sum + Number(o.discountAmount), 0);
   const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
   // Get trends
   const trends = await getMonthlyTrends(storeId, year);
 
   // Map to transactions for frontend
-  const transactions = orders.map((o) => ({
+  const transactions = orders.map((o: any) => ({
     id: o.id,
     orderNumber: o.orderNumber,
     customerName: o.user.name || "Unknown",
