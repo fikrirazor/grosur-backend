@@ -14,6 +14,7 @@ export const updateProductSchema = z.object({
   price: z.number().positive().optional(),
   categoryId: z.string().uuid().optional(),
   isActive: z.boolean().optional(),
+  storeId: z.string().uuid("Invalid store ID format"),
 });
 
 export const uploadProductImagesSchema = z.object({

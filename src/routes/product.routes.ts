@@ -15,6 +15,14 @@ router.get("/", productController.getPublicProducts);
 router.get("/categories", productController.getCategories);
 router.get("/:productId", productController.getPublicProductDetail);
 
+// Protected routes for Admins
+router.get(
+  "/admin/:productId",
+  verifyToken,
+  authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
+  productController.getProductById,
+);
+
 // Protected routes for Super Admins (Store Admins are Read-Only for Products)
 router.post(
   "/",
