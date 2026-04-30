@@ -2,6 +2,7 @@ import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import cloudinary from "../config/cloudinary.config";
 import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
+import { generateSlug } from "../utils/slug";
 
 export const getPublicProducts = async (query: ProductQuery) => {
   const { storeId, search, categoryId, page, limit } = query;
@@ -234,10 +235,7 @@ export const createProduct = async (data: CreateProductInput) => {
   }
 
   // Generate slug from name
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  const slug = generateSlug(name);  
 
   // Create product with stock entry
   const product = await prisma.$transaction(async (tx) => {
@@ -331,10 +329,7 @@ export const updateProduct = async (
   // Generate new slug if name is updated
   let newSlug;
   if (data.name && data.name !== productRecord.name) {
-    newSlug = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+    newSlug = generateSlug(data.name);
   }
 
   // Update product
