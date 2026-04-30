@@ -2,20 +2,38 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import pino from "pino-http";
-import logger from "./utils/logger.util";
+import pinoHttp from "pino-http";
 import config from "./config/env";
+import logger from "./utils/logger.util";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 
 const app: Application = express();
 
+// HTTP request logger
+app.use(
+  pinoHttp({
+    logger,
+    customSuccessMessage: (req, res, responseTime) =>
+      `${req.method} ${req.url} ${res.statusCode} - ${responseTime}ms`,
+    customErrorMessage: (req, res, err) =>
+      `${req.method} ${req.url} ${res.statusCode} - ${err.message}`,
+    customLogLevel: (_req, res, err) => {
+      if (res.statusCode >= 500 || err) return "error";
+      if (res.statusCode >= 400) return "warn";
+      return "info";
+    },
+    serializers: {
+      req: () => undefined,
+      res: () => undefined,
+      err: () => undefined,
+    },
+  }),
+);
+
 // Security middleware
 app.use(helmet());
 app.use(cookieParser());
-
-// Logging middleware
-app.use(pino({ logger }));
 
 // CORS configuration
 app.use(

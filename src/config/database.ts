@@ -9,7 +9,7 @@ const prismaClientSingleton = () => {
   const pool = new Pool({ connectionString: config.databaseUrl });
   return new PrismaClient({
     log:
-      config.nodeEnv === "development" ? ["query", "error", "warn"] : ["error"],
+      config.nodeEnv === "development" ? ["error", "warn"] : ["error"],
     adapter: new PrismaPg(pool),
   });
 };
