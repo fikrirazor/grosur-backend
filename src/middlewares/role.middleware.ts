@@ -14,7 +14,7 @@ export const adminRedirectMiddleware = (
   if (!isAllowed) {
     return res.redirect("/");
   }
-  next();
+  next(); // continue ke controller kalau rolenya oke
 };
 
 // Task 2.1.13: API Middleware untuk /api/admin/* (Return 403 kalau role salah)
@@ -23,11 +23,11 @@ export const adminApiMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = (req as any).user;
+  const user = (req as any).user; 
   const isAllowed = checkRole(user?.role, ["SUPER_ADMIN", "STORE_ADMIN"]);
 
   if (!isAllowed) {
-    // Return 403 JSON response
+    // Return 403 JSON response kalau role bukan admin
     return sendResponse(
       res,
       403,
@@ -38,5 +38,5 @@ export const adminApiMiddleware = (
       "FORBIDDEN",
     );
   }
-  next();
+  next(); 
 };
