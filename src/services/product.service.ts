@@ -2,7 +2,7 @@ import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import cloudinary from "../config/cloudinary.config";
 import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
-import { generateSlug } from "../utils/slug";
+import { generateSlug } from "../utils/slug.util";
 
 export const getPublicProducts = async (query: ProductQuery) => {
   const { storeId, search, categoryId, page, limit } = query;
