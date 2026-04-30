@@ -12,15 +12,16 @@ const router = Router();
 // Public route - anyone can view categories
 router.get("/", categoryController.getCategories);
 
-// Protected routes - only SUPER_ADMIN can manage categories (Store Admin is Read-Only)
+// Protected routes - hanya SUPER_ADMIN boleh menambah kategori (Store Admin is Read-Only)
 router.post(
   "/",
-  verifyToken,
-  authorizeRoles("SUPER_ADMIN"),
-  validateRequest(createCategorySchema),
+  verifyToken, 
+  authorizeRoles("SUPER_ADMIN"), 
+  validateRequest(createCategorySchema), 
   categoryController.createCategory,
 );
 
+// Protected routes - hanya SUPER_ADMIN boleh mengedit kategori 
 router.put(
   "/:categoryId",
   verifyToken,
@@ -29,6 +30,7 @@ router.put(
   categoryController.updateCategory,
 );
 
+// Protected routes - hanya SUPER_ADMIN boleh menghapus kategori 
 router.delete(
   "/:categoryId",
   verifyToken,
