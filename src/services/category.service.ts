@@ -1,13 +1,7 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
+import { CreateCategoryInput, UpdateCategoryInput } from "../types/category.types";
 
-export interface CreateCategoryInput {
-  name: string;
-}
-
-export interface UpdateCategoryInput {
-  name?: string;
-}
 
 export const getCategories = async () => {
   return await prisma.category.findMany({

@@ -1,30 +1,7 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import cloudinary from "../config/cloudinary.config";
-
-export interface ProductQuery {
-  storeId: string;
-  search?: string;
-  categoryId?: string;
-  page: number;
-  limit: number;
-}
-
-export interface CreateProductInput {
-  name: string;
-  description?: string;
-  price: number;
-  categoryId: string;
-  storeId: string;
-}
-
-export interface UpdateProductInput {
-  name?: string;
-  description?: string;
-  price?: number;
-  categoryId?: string;
-  isActive?: boolean;
-}
+import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
 
 export const getPublicProducts = async (query: ProductQuery) => {
   const { storeId, search, categoryId, page, limit } = query;
