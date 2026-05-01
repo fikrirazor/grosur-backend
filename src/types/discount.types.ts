@@ -1,3 +1,4 @@
+import { DiscountType } from "../generated/prisma";
 
 // untuk input create discount
 export interface CreateDiscountInput {

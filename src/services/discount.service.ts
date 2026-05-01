@@ -1,6 +1,5 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
-import { DiscountType } from "../generated/prisma";
 import { CreateDiscountInput, UpdateDiscountInput } from "../types/discount.types";
 
 /**
