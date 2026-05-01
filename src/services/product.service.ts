@@ -1,30 +1,8 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import cloudinary from "../config/cloudinary.config";
-
-export interface ProductQuery {
-  storeId: string;
-  search?: string;
-  categoryId?: string;
-  page: number;
-  limit: number;
-}
-
-export interface CreateProductInput {
-  name: string;
-  description?: string;
-  price: number;
-  categoryId: string;
-  storeId: string;
-}
-
-export interface UpdateProductInput {
-  name?: string;
-  description?: string;
-  price?: number;
-  categoryId?: string;
-  isActive?: boolean;
-}
+import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
+import { generateSlug } from "../utils/slug.util";
 
 export const getPublicProducts = async (query: ProductQuery) => {
   const { storeId, search, categoryId, page, limit } = query;
@@ -192,9 +170,11 @@ export const getCategories = async () => {
   });
 };
 
-export const getProductById = async (productId: string) => {
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
+export const getProductById = async (productIdOrSlug: string) => {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
+  
+  const product = await prisma.product.findFirst({
+    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
     include: {
       category: true,
       images: true,
@@ -255,10 +235,7 @@ export const createProduct = async (data: CreateProductInput) => {
   }
 
   // Generate slug from name
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  const slug = generateSlug(name);  
 
   // Create product with stock entry
   const product = await prisma.$transaction(async (tx) => {
@@ -296,24 +273,22 @@ export const createProduct = async (data: CreateProductInput) => {
 };
 
 export const updateProduct = async (
-  productId: string,
+  productIdOrSlug: string,
   data: UpdateProductInput,
   storeId: string,
 ) => {
-  // Verify product exists and belongs to store
-  const existingStock = await prisma.stock.findUnique({
-    where: {
-      productId_storeId: {
-        productId,
-        storeId,
-      },
-    },
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
+
+  const productRecord = await prisma.product.findFirst({
+    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
     include: {
-      product: true,
-    },
+      stocks: {
+        where: { storeId }
+      }
+    }
   });
 
-  if (!existingStock) {
+  if (!productRecord || productRecord.stocks.length === 0) {
     throw new AppError(
       404,
       "Product not found in this store",
@@ -323,7 +298,7 @@ export const updateProduct = async (
   }
 
   // If updating name, check for duplicates
-  if (data.name && data.name !== existingStock.product.name) {
+  if (data.name && data.name !== productRecord.name) {
     const duplicateProduct = await prisma.product.findFirst({
       where: {
         name: {
@@ -336,7 +311,7 @@ export const updateProduct = async (
           },
         },
         id: {
-          not: productId,
+          not: productRecord.id,
         },
       },
     });
@@ -351,11 +326,18 @@ export const updateProduct = async (
     }
   }
 
+  // Generate new slug if name is updated
+  let newSlug;
+  if (data.name && data.name !== productRecord.name) {
+    newSlug = generateSlug(data.name);
+  }
+
   // Update product
   const updatedProduct = await prisma.product.update({
-    where: { id: productId },
+    where: { id: productRecord.id },
     data: {
       name: data.name,
+      slug: newSlug,
       description: data.description,
       price: data.price,
       categoryId: data.categoryId,
@@ -373,18 +355,19 @@ export const updateProduct = async (
   return updatedProduct;
 };
 
-export const deleteProduct = async (productId: string, storeId: string) => {
-  // Verify product exists and belongs to store
-  const existingStock = await prisma.stock.findUnique({
-    where: {
-      productId_storeId: {
-        productId,
-        storeId,
-      },
-    },
+export const deleteProduct = async (productIdOrSlug: string, storeId: string) => {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
+
+  const productRecord = await prisma.product.findFirst({
+    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
+    include: {
+      stocks: {
+        where: { storeId }
+      }
+    }
   });
 
-  if (!existingStock) {
+  if (!productRecord || productRecord.stocks.length === 0) {
     throw new AppError(
       404,
       "Product not found in this store",
@@ -393,37 +376,33 @@ export const deleteProduct = async (productId: string, storeId: string) => {
     );
   }
 
-  // Delete product (cascade will handle related records)
-  await prisma.product.delete({
-    where: { id: productId },
+  // Soft delete to avoid breaking Order history
+  await prisma.product.update({
+    where: { id: productRecord.id },
+    data: { isActive: false },
   });
 
   return { success: true, message: "Product deleted successfully" };
 };
 
 export const uploadProductImages = async (
-  productId: string,
+  productIdOrSlug: string,
   storeId: string,
   files: Express.Multer.File[],
 ) => {
-  // Verify product exists and belongs to store
-  const existingStock = await prisma.stock.findUnique({
-    where: {
-      productId_storeId: {
-        productId,
-        storeId,
-      },
-    },
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
+
+  const productRecord = await prisma.product.findFirst({
+    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
     include: {
-      product: {
-        include: {
-          images: true,
-        },
-      },
-    },
+      images: true,
+      stocks: {
+        where: { storeId }
+      }
+    }
   });
 
-  if (!existingStock) {
+  if (!productRecord || productRecord.stocks.length === 0) {
     throw new AppError(
       404,
       "Product not found in this store",
@@ -452,7 +431,7 @@ export const uploadProductImages = async (
   const images = await prisma.$transaction(
     uploadedUrls.map((url) =>
       prisma.productImage.create({
-        data: { url, productId },
+        data: { url, productId: productRecord.id },
       }),
     ),
   );

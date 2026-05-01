@@ -2,23 +2,7 @@ import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import { StockJournalType } from "../generated/prisma";
 import { createStockJournal } from "./stock-journal.service";
-
-export interface UpdateStockInput {
-  productId: string;
-  storeId: string;
-  change: number;
-  reason?: string;
-  userId: string;
-}
-
-export interface TransferStockInput {
-  productId: string;
-  fromStoreId: string;
-  toStoreId: string;
-  quantity: number;
-  reason?: string;
-  userId: string;
-}
+import { UpdateStockInput, TransferStockInput } from "../types/stock.types";
 
 /**
  * Validate source stock has enough quantity

@@ -1,32 +1,7 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import { DiscountType } from "../generated/prisma";
-
-export interface CreateDiscountInput {
-  storeId: string;
-  productId?: string;
-  type: DiscountType;
-  value: number;
-  minSpend?: number;
-  maxDiscount?: number;
-  buyQty?: number;
-  freeQty?: number;
-  startDate: Date;
-  endDate: Date;
-}
-
-export interface UpdateDiscountInput {
-  productId?: string;
-  type?: DiscountType;
-  value?: number;
-  minSpend?: number;
-  maxDiscount?: number;
-  buyQty?: number;
-  freeQty?: number;
-  isActive?: boolean;
-  startDate?: Date;
-  endDate?: Date;
-}
+import { CreateDiscountInput, UpdateDiscountInput } from "../types/discount.types";
 
 /**
  * Validate product exists in store
