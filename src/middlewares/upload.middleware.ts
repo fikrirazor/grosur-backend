@@ -5,7 +5,7 @@ import { AppError } from "./error.middleware";
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (_req, file) => {
+  params: async (_req: any, file: any) => {
     // Determine folder based on fieldname or other criteria if needed
     let folder = "grosur/misc";
     if (file.fieldname === "image") folder = "grosur/banners";
