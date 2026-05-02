@@ -4,8 +4,8 @@ import cloudinary from "../config/cloudinary.config";
 import { AppError } from "./error.middleware";
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary as any,
-  params: async (_req: any, file: any) => {
+  cloudinary: cloudinary,
+  params: async (_req, file) => {
     // Determine folder based on fieldname or other criteria if needed
     let folder = "grosur/misc";
     if (file.fieldname === "image") folder = "grosur/banners";
@@ -19,7 +19,7 @@ const storage = new CloudinaryStorage({
       resource_type: "auto",
     };
   },
-});
+} as any); // The options object itself needs to be cast if types don't match perfectly, but internally it's better.
 
 const fileFilter = (_req: any, file: any, cb: any) => {
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
