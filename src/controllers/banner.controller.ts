@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import prisma from "../config/database";
-import { uploadToCloudinary } from "../utils/cloudinary";
 
 export const getBanners = async (_req: Request, res: Response) => {
   try {
@@ -33,8 +32,7 @@ export const createBanner = async (req: Request, res: Response) => {
 
     let imageUrl = null;
     if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer);
-      imageUrl = uploadResult.secure_url;
+      imageUrl = (req.file as any).path;
     }
 
     const banner = await prisma.banner.create({
@@ -77,8 +75,7 @@ export const updateBanner = async (req: Request, res: Response) => {
 
     let imageUrl = undefined;
     if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer);
-      imageUrl = uploadResult.secure_url;
+      imageUrl = (req.file as any).path;
     }
 
     const banner = await prisma.banner.update({

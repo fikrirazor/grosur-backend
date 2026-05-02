@@ -16,7 +16,7 @@ const gracefulShutdown = async (signal: string) => {
 
     process.exit(0);
   } catch (error) {
-    logger.error("Error during shutdown:", error);
+    logger.error("Error during shutdown:", error as any);
     process.exit(1);
   }
 };
@@ -39,7 +39,7 @@ const startServer = async () => {
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
     process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   } catch (error) {
-    logger.error("Failed to start server:", error);
+    logger.error("Failed to start server:", error as any);
     process.exit(1);
   }
 };
