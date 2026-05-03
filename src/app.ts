@@ -38,7 +38,20 @@ app.use(cookieParser());
 // CORS configuration
 app.use(
   cors({
-    origin: config.jwt.corsOrigin || process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://grosur.vercel.app"
+      ];
+      if (process.env.CORS_ORIGIN) {
+        allowedOrigins.push(...process.env.CORS_ORIGIN.split(','));
+      }
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
