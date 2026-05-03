@@ -96,7 +96,7 @@ export const requestEmailChange = async (req: Request, res: Response) => {
     await sendVerificationEmail(newEmail, token);
 
     // Note: We clear the cookie here to force them to log back in after verifying
-    res.clearCookie("token", { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+    res.clearCookie("token", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
     
     return res.status(200).json({ message: "Email berhasil diubah. Silakan cek email baru untuk verifikasi." });
   } catch (error) {

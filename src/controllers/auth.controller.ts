@@ -80,12 +80,14 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 86400000, // 24 hours
     });
 
     res.cookie("access_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 86400000,
     });
 
@@ -129,9 +131,9 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
 
 export const logout = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    res.clearCookie("token");
-    res.clearCookie("access_token");
-    res.clearCookie("role");
+    res.clearCookie("token", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
+    res.clearCookie("access_token", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
+    res.clearCookie("role", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
     return sendResponse(res, 200, true, "Logged out successfully");
   } catch (error) {
     next(error);
@@ -256,12 +258,14 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 86400000,
     });
 
     res.cookie("access_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 86400000,
     });
 
