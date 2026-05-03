@@ -5,24 +5,25 @@ import jwt from "jsonwebtoken";
 import { calculateDistance } from "../utils/haversine";
 import { sendResponse } from "../utils/response.util";
 
-const MAX_RADIUS_KM = 50;
 
 // Helper 1: Calculate, Filter by 50km, and Sort
 const getSortedNearbyStores = (lat: number, lng: number, stores: any[]) => {
     return stores
         .map(s => ({ ...s, distance: calculateDistance(lat, lng, s.latitude, s.longitude) }))
-        .filter(s => s.distance <= MAX_RADIUS_KM)
+        .filter(s => s.distance <= (s.maxRadius || 50))
         .sort((a, b) => a.distance - b.distance);
 };
+
 
 // Helper 2: Handle the Main Store Fallback
 const handleFallback = (stores: any[]) => {
     const mainStore = stores.find(s => s.isMain) || stores[0];
     return {
         store: mainStore,
-        message: "Menggunakan toko utama (Lokasi ditolak atau di luar jangkauan 50km)"
+        message: "Menggunakan toko utama (Lokasi di luar jangkauan atau belum terdeteksi)"
     };
 };
+
 
 export const getAssignedStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -60,7 +61,8 @@ export const getFallbackStore = async (_req: Request, res: Response, next: NextF
 export const getNearestStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { latitude, longitude } = req.body;
-        const stores = await prisma.store.findMany();
+        const stores = await prisma.store.findMany({ where: { isActive: true } });
+
 
         if (!stores.length) return sendResponse(res, 404, false, "Data toko kosong");
 
@@ -190,4 +192,25 @@ const executeAssignAdmin = async (userId: string, storeId: string) => {
             data: { managedStoreId: storeId, role: "STORE_ADMIN" }
         })
     ]);
+};
+export const setMainStore = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+
+        // Use transaction to ensure only one store is main
+        await prisma.$transaction([
+            prisma.store.updateMany({
+                where: { isMain: true },
+                data: { isMain: false }
+            }),
+            prisma.store.update({
+                where: { id },
+                data: { isMain: true }
+            })
+        ]);
+
+        return sendResponse(res, 200, true, "Berhasil mengatur toko pusat");
+    } catch (error) {
+        next(error);
+    }
 };

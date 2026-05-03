@@ -21,17 +21,21 @@ const USER_SELECT = {
 // --- Helper Functions ---
 
 export const findUserByEmail = async (email: string) => {
+  if (!email) return null;
   return await prisma.user.findUnique({
     where: { email },
     include: { managedStore: true },
   });
 };
 
+
 export const findUserByReferralCode = async (referralCode: string) => {
+  if (!referralCode) return null;
   return await prisma.user.findUnique({
     where: { referralCode },
   });
 };
+
 
 export const verifyPassword = async (plain: string, hashed: string) => {
   return await comparePassword(plain, hashed);

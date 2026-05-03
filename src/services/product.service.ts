@@ -1,6 +1,6 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
-import cloudinary from "../config/cloudinary.config";
+
 import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
 import { generateSlug } from "../utils/slug.util";
 
@@ -411,22 +411,8 @@ export const uploadProductImages = async (
     );
   }
 
-  // Upload each file buffer to Cloudinary
-  const uploadToCloudinary = (buffer: Buffer): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "grosur/products", resource_type: "image" },
-        (error, result) => {
-          if (error || !result) return reject(error);
-          resolve(result.secure_url);
-        },
-      );
-      stream.end(buffer);
-    });
-
-  const uploadedUrls = await Promise.all(
-    files.map((file) => uploadToCloudinary(file.buffer)),
-  );
+  // With CloudinaryStorage, files already contain the URLs in the path property
+  const uploadedUrls = files.map((file: any) => file.path);
 
   const images = await prisma.$transaction(
     uploadedUrls.map((url) =>

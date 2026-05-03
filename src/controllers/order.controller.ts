@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
-import cloudinary from "../config/cloudinary";
+
 
 /**
  * Validates stock for all items in the user's cart across all stores.
@@ -343,27 +343,14 @@ export const uploadPaymentProof = async (
       return sendResponse(res, 400, false, "Batas waktu pembayaran telah habis. Pesanan dibatalkan otomatis.");
     }
 
-    // Upload to Cloudinary
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "grosur/payment-proofs",
-          resource_type: "image",
-          public_id: `payment_${order.orderNumber}_${Date.now()}`,
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      stream.end(file.buffer);
-    });
+    // With CloudinaryStorage, the file is already uploaded
+    const paymentProofUrl = (file as any).path;
 
     // Update order with payment proof URL and status
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
-        paymentProof: uploadResult.secure_url,
+        paymentProof: paymentProofUrl,
         status: "WAITING_CONFIRMATION",
         paymentStatus: "PENDING",
         paidAt: new Date(),

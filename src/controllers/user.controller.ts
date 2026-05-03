@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../config/database";
 import bcrypt from "bcrypt";
-import { uploadToCloudinary } from "../utils/cloudinary";
 import { sendVerificationEmail } from "../services/mailer.service";
 import { createVerifyToken, generateRandomToken, findUserByEmail, findUserByReferralCode } from "../services/auth.service";
 
@@ -60,8 +59,7 @@ const buildProfileUpdateData = async (req: Request) => {
   if (req.body && req.body.phone !== undefined) data.phone = req.body.phone;
 
   if (req.file) {
-    const uploadResult = await uploadToCloudinary(req.file.buffer);
-    data.photo = uploadResult.secure_url;
+    data.photo = (req.file as any).path;
   }
   return data;
 };
