@@ -1,18 +1,21 @@
 import { PaginationMeta } from "../types/product.types";
 
 /**
- * Shared utility to format pagination metadata.
+ * Helper untuk format metadata pagination (total data, halaman, dll)
+ * Digunakan secara konsisten di semua service agar response API seragam.
  */
 export const formatPaginationMeta = (
-  total: number,
-  page: number,
-  limit: number,
+  total: number, // Total data keseluruhan
+  page: number, // Halaman saat ini
+  limit: number, // Jumlah data per halaman
 ): PaginationMeta => {
+  const totalPage = Math.ceil(total / limit);
+
   return {
     total,
     page,
     limit,
-    totalPage: Math.ceil(total / limit),
-    hasMore: page * limit < total,
+    totalPage,
+    hasMore: page < totalPage,
   };
 };

@@ -3,7 +3,7 @@ import { AppError } from "../../middlewares/error.middleware";
 import { StockJournalType } from "../../generated/prisma";
 
 /**
- * Validate source stock has enough quantity
+ * Memvalidasi apakah stok asal memiliki kuantitas yang cukup.
  */
 export const validateSourceStock = async (
   productId: string,
@@ -32,7 +32,7 @@ export const validateSourceStock = async (
 };
 
 /**
- * Get or create destination stock in a transaction
+ * Mengambil data stok tujuan atau membuatnya jika belum ada (dalam transaksi).
  */
 export const getOrCreateDestinationStock = async (
   tx: any,
@@ -55,7 +55,7 @@ export const getOrCreateDestinationStock = async (
 };
 
 /**
- * Update stock quantity in a transaction
+ * Memperbarui kuantitas stok di database (dalam transaksi).
  */
 export const updateStockQuantity = async (
   tx: any,
@@ -70,7 +70,7 @@ export const updateStockQuantity = async (
 };
 
 /**
- * Create journal entry in a transaction
+ * Mencatat riwayat perubahan stok ke dalam jurnal (dalam transaksi).
  */
 export const createJournalInTransaction = async (
   tx: any,

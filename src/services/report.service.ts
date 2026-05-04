@@ -8,6 +8,10 @@ import { getMonthRange } from "../utils/date.util";
  * Get monthly summary of stock changes per product
  * (Total addition, Total reduction, End balance)
  */
+/**
+ * Mendapatkan laporan ringkasan stok bulanan per produk.
+ * Mencakup stok masuk, keluar, dan saldo akhir.
+ */
 export const getStockSummaryReport = async (
   userId: string,
   role: string,
@@ -29,6 +33,10 @@ export const getStockSummaryReport = async (
   }
 
   const { startDate, endDate } = getMonthRange(month, year);
+  if (!startDate || !endDate) {
+    throw new AppError(400, "Invalid month or year provided");
+  }
+
   const now = new Date();
   const isFuture = startDate > now;
   if (isFuture) return { success: true, data: [], period: { month, year } };

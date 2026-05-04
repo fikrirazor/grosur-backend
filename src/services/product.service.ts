@@ -19,6 +19,9 @@ import {
   buildProductWhereClause,
 } from "./helpers/product.helper";
 
+/**
+ * Mendapatkan daftar produk untuk publik (Catalog) dengan filter dan pagination.
+ */
 export const getPublicProducts = async (
   query: ProductQuery,
 ): Promise<{ items: ProductListItem[]; meta: PaginationMeta }> => {
@@ -44,6 +47,9 @@ export const getPublicProducts = async (
   };
 };
 
+/**
+ * Mendapatkan detail produk untuk publik berdasarkan slug dan storeId.
+ */
 export const getPublicProductDetail = async (
   slug: string,
   storeId: string,
@@ -60,16 +66,25 @@ export const getPublicProductDetail = async (
   return stock ? mapToProductDetailItem(stock) : null;
 };
 
+/**
+ * Mendapatkan daftar semua kategori produk.
+ */
 export const getCategories = async () => {
   return await prisma.category.findMany({
     orderBy: { name: "asc" },
   });
 };
 
+/**
+ * Mencari satu produk berdasarkan ID atau Slug.
+ */
 export const getProductById = async (productIdOrSlug: string) => {
   return await findProductOrThrow(productIdOrSlug);
 };
 
+/**
+ * Membuat produk baru dan menginisialisasi stok di toko (Admin).
+ */
 export const createProduct = async (data: CreateProductInput) => {
   const { name, description, price, categoryId, storeId } = data;
 
@@ -119,6 +134,9 @@ export const createProduct = async (data: CreateProductInput) => {
   });
 };
 
+/**
+ * Memperbarui data produk (Admin).
+ */
 export const updateProduct = async (
   productIdOrSlug: string,
   data: UpdateProductInput,
@@ -159,6 +177,9 @@ export const updateProduct = async (
   });
 };
 
+/**
+ * Menghapus produk (Soft Delete dengan mengubah isActive).
+ */
 export const deleteProduct = async (
   productIdOrSlug: string,
   storeId: string,
@@ -171,6 +192,9 @@ export const deleteProduct = async (
   return { success: true, message: "Product deleted successfully" };
 };
 
+/**
+ * Mengunggah banyak foto untuk satu produk.
+ */
 export const uploadProductImages = async (
   productIdOrSlug: string,
   storeId: string,
@@ -190,6 +214,9 @@ export const uploadProductImages = async (
   return { message: `${images.length} image(s) uploaded successfully`, images };
 };
 
+/**
+ * Mendapatkan detail produk dengan informasi stok dan toko terdekat.
+ */
 export const getProductDetail = async (
   productId: string,
   userLat?: number,

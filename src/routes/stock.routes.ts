@@ -10,7 +10,8 @@ import {
 
 const router = Router();
 
-// Update stock - requires authentication and admin role
+// Update stok manual (Tambah/Kurang)
+// PATCH /api/stocks/update
 router.patch(
   "/update",
   verifyToken,
@@ -19,7 +20,8 @@ router.patch(
   stockController.updateStock,
 );
 
-// Transfer stock between stores - SUPER_ADMIN only
+// Transfer stok antar toko (Hanya Super Admin)
+// POST /api/stocks/transfer
 router.post(
   "/transfer",
   verifyToken,
@@ -28,7 +30,8 @@ router.post(
   stockController.transferStock,
 );
 
-// Get stock journals - read only
+// Melihat riwayat jurnal stok
+// GET /api/stocks/journals?storeId=...&search=...&type=...
 router.get(
   "/journals",
   verifyToken,
@@ -36,7 +39,8 @@ router.get(
   stockJournalController.getStockJournals,
 );
 
-// Get journal statistics for a stock
+// Statistik ringkasan jurnal untuk stok tertentu
+// GET /api/stocks/journals/:stockId/stats
 router.get(
   "/journals/:stockId/stats",
   verifyToken,

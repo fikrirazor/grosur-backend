@@ -2,7 +2,7 @@ import prisma from "../../config/database";
 import { ProductMovement, StoreMovement, StockReportSummary } from "../../types/stock.types";
 
 /**
- * Get final stock for a product from Stock table
+ * Mendapatkan jumlah stok akhir suatu produk di tabel Stock.
  */
 export const getFinalStock = async (productId: string, storeId: string) => {
   const stock = await prisma.stock.findUnique({
@@ -13,7 +13,7 @@ export const getFinalStock = async (productId: string, storeId: string) => {
 };
 
 /**
- * Aggregate stock movements by product
+ * Mengelompokkan pergerakan stok berdasarkan produk.
  */
 export const aggregateByProduct = (journals: any[]): ProductMovement[] => {
   const productMap = new Map<string, ProductMovement>();
@@ -48,7 +48,7 @@ export const aggregateByProduct = (journals: any[]): ProductMovement[] => {
 };
 
 /**
- * Aggregate stock movements by store
+ * Mengelompokkan pergerakan stok berdasarkan toko.
  */
 export const aggregateByStore = (journals: any[]): StoreMovement[] => {
   const storeMap = new Map<string, any>();
@@ -86,7 +86,7 @@ export const aggregateByStore = (journals: any[]): StoreMovement[] => {
 };
 
 /**
- * Build summary statistics
+ * Membangun statistik ringkasan laporan (Summary).
  */
 export const buildSummary = (
   byProduct: ProductMovement[],

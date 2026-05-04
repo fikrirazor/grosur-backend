@@ -10,6 +10,9 @@ import {
   createJournalInTransaction,
 } from "./helpers/stock.helper";
 
+/**
+ * Memperbarui kuantitas stok produk secara manual (Tambah/Kurang).
+ */
 export const updateStock = async (data: UpdateStockInput) => {
   const { productId, storeId, change, reason, userId } = data;
 
@@ -65,6 +68,9 @@ export const updateStock = async (data: UpdateStockInput) => {
   };
 };
 
+/**
+ * Melakukan transfer stok antar toko.
+ */
 export const transferStock = async (data: TransferStockInput) => {
   const { productId, fromStoreId, toStoreId, quantity, reason, userId } = data;
 

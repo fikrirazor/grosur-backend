@@ -7,7 +7,8 @@ import {
 } from "../../types/product.types";
 
 /**
- * Unified lookup for product by ID or Slug with optional store filter.
+ * Mencari produk berdasarkan ID atau Slug, melempar error jika tidak ditemukan.
+ * Bisa difilter berdasarkan storeId tertentu.
  */
 export const findProductOrThrow = async (
   identifier: string,
@@ -41,7 +42,7 @@ export const findProductOrThrow = async (
 };
 
 /**
- * Formats a Prisma discount object to API-friendly DiscountInfo.
+ * Memformat objek diskon Prisma menjadi format standar API.
  */
 export const formatDiscount = (discount: any): DiscountInfo | null => {
   if (!discount) return null;
@@ -56,7 +57,7 @@ export const formatDiscount = (discount: any): DiscountInfo | null => {
 };
 
 /**
- * Maps stock and product data to ProductListItem.
+ * Mapping data Stock & Product menjadi item untuk daftar produk (Katalog).
  */
 export const mapToProductListItem = (stock: any): ProductListItem => {
   return {
@@ -77,7 +78,7 @@ export const mapToProductListItem = (stock: any): ProductListItem => {
 };
 
 /**
- * Maps stock and product data to ProductDetailItem.
+ * Mapping data Stock & Product menjadi detail produk lengkap (Detail Page).
  */
 export const mapToProductDetailItem = (stock: any): ProductDetailItem => {
   return {
@@ -101,7 +102,7 @@ export const mapToProductDetailItem = (stock: any): ProductDetailItem => {
 };
 
 /**
- * Find nearest store by user location
+ * Mencari toko terdekat berdasarkan koordinat latitude dan longitude user.
  */
 export const findNearestStore = async (userLat: number, userLong: number) => {
   const stores = await prisma.store.findMany({
@@ -136,7 +137,7 @@ export const findNearestStore = async (userLat: number, userLong: number) => {
 };
 
 /**
- * Calculate distance between two coordinates (Haversine formula)
+ * Kalkulasi jarak antara dua koordinat menggunakan Haversine formula (satuan km).
  */
 export const calculateDistance = (
   lat1: number,
@@ -158,7 +159,7 @@ export const calculateDistance = (
 };
 
 /**
- * Resolves targetStoreId based on storeId input or nearest store from lat/long.
+ * Memastikan storeId tujuan, baik dari input langsung atau mencari toko terdekat.
  */
 export const resolveTargetStoreId = async (
   storeId?: string,
@@ -184,7 +185,7 @@ export const resolveTargetStoreId = async (
 };
 
 /**
- * Returns a centralized Prisma include object for public product listings and details.
+ * Mendapatkan objek 'include' Prisma yang standar untuk list dan detail produk publik.
  */
 export const getPublicProductInclude = (now: Date) => {
   return {
@@ -209,7 +210,7 @@ export const getPublicProductInclude = (now: Date) => {
 };
 
 /**
- * Builds the Prisma where clause for public product queries.
+ * Membangun filter 'where' Prisma untuk pencarian produk di sisi publik.
  */
 export const buildProductWhereClause = (filters: {
   storeId: string;
