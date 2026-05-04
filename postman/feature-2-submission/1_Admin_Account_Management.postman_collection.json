@@ -1,0 +1,205 @@
+{
+	"info": {
+		"_postman_id": "admin-account-management-v2",
+		"name": "1. Admin Account Management",
+		"description": "Comprehensive API testing for Admin Authorization and User Data management (Super Admin & Store Admin).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin Authorization",
+			"item": [
+				{
+					"name": "Login as SUPER_ADMIN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.success && response.data.accessToken) {",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    console.log('Super Admin Token saved');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"Password123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login as STORE_ADMIN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.success && response.data.accessToken) {",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    console.log('Store Admin Token saved');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"storeadmin@example.com\",\n    \"password\": \"Password123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Manage User Data (Store Admin CRUD)",
+			"item": [
+				{
+					"name": "List Store Admins",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/store-admins?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "store-admins"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Store Admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Store Admin\",\n    \"email\": \"newadmin@example.com\",\n    \"password\": \"Password123!\",\n    \"managedStoreId\": \"{{storeId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/store-admins",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "store-admins"]
+						}
+					}
+				},
+				{
+					"name": "Update Store Admin",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Name\",\n    \"isVerified\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/store-admins/:adminId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "store-admins", ":adminId"],
+							"variable": [
+								{ "key": "adminId", "value": "admin-uuid-here" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Store Admin",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/store-admins/:adminId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "store-admins", ":adminId"],
+							"variable": [
+								{ "key": "adminId", "value": "admin-uuid-here" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "View Registered Users",
+			"item": [
+				{
+					"name": "Get All Registered Users (Super Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/users?page=1&limit=10&search=john",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "users"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" },
+								{ "key": "search", "value": "john" }
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:5000/api", "type": "string" },
+		{ "key": "accessToken", "value": "", "type": "string" },
+		{ "key": "storeId", "value": "fill-store-id-here", "type": "string" }
+	]
+}
