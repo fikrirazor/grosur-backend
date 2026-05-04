@@ -1,33 +1,8 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import { formatPaginationMeta } from "../utils/pagination.util";
+import { buildDateFilter, getPeriodLabel } from "../utils/date.util";
 
-/**
- * Build date range filter for orders
- */
-const buildDateFilter = (month?: number, year?: number) => {
-  if (!year) return {};
-
-  if (month) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-    return {
-      createdAt: {
-        gte: startDate,
-        lte: endDate,
-      },
-    };
-  } else {
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
-    return {
-      createdAt: {
-        gte: startDate,
-        lte: endDate,
-      },
-    };
-  }
-};
 
 /**
  * Get monthly trend data for a specific year or the last 12 months
@@ -297,7 +272,7 @@ export const getSalesReport = async (
         totalRevenue,
         totalDiscount,
         averageOrderValue,
-        period: month && year ? `${month}/${year}` : "All Time",
+        period: getPeriodLabel(month, year),
         storeId: storeId || "All Stores",
       },
       byCategory,

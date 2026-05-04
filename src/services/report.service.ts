@@ -1,15 +1,8 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import { formatPaginationMeta } from "../utils/pagination.util";
+import { getMonthRange } from "../utils/date.util";
 
-/**
- * Build date range filter for reports
- */
-const buildDateRange = (month: number, year: number) => {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-  return { startDate, endDate };
-};
 
 /**
  * Get monthly summary of stock changes per product
@@ -35,7 +28,7 @@ export const getStockSummaryReport = async (
     throw new AppError(403, "Unauthorized access");
   }
 
-  const { startDate, endDate } = buildDateRange(month, year);
+  const { startDate, endDate } = getMonthRange(month, year);
   const now = new Date();
   const isFuture = startDate > now;
   if (isFuture) return { success: true, data: [], period: { month, year } };
