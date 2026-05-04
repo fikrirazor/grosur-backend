@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { StockJournalType } from "../generated/prisma";
+import { formatPaginationMeta } from "../utils/pagination.util";
 
 export interface CreateJournalInput {
   stockId: string;
@@ -92,20 +93,7 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
   }));
 };
 
-/**
- * Format journal response with pagination metadata
- */
-const formatJournalResponse = (journals: any[], total: number, page: number, limit: number) => {
-  return {
-    journals,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
-};
+
 
 /**
  * Get stock journals with pagination and filters
@@ -132,7 +120,10 @@ export const getStockJournals = async (filters: GetJournalsInput) => {
     prisma.stockJournal.count({ where }),
   ]);
 
-  return formatJournalResponse(journals, total, page, limit);
+  return {
+    journals,
+    meta: formatPaginationMeta(total, page, limit),
+  };
 };
 
 /**

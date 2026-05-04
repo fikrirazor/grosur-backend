@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
+import { formatPaginationMeta } from "../utils/pagination.util";
 
 /**
  * Build date range filter for reports
@@ -187,11 +188,6 @@ export const getStockDetailReport = async (
   return {
     success: true,
     data: formattedData,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    }
+    meta: formatPaginationMeta(total, page, limit)
   };
 };

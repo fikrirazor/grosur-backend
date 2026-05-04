@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
+import { formatPaginationMeta } from "../utils/pagination.util";
 
 /**
  * Build date range filter for orders
@@ -283,13 +284,7 @@ export const getSalesReport = async (
       byCategory,
       byProduct,
       trends,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
-      },
+      pagination: formatPaginationMeta(total, page, limit),
     },
   };
 };
