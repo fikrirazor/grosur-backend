@@ -40,10 +40,10 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:3000",
-        "https://grosur.vercel.app"
+        "https://grosur.vercel.app",
       ];
       if (process.env.CORS_ORIGIN) {
-        allowedOrigins.push(...process.env.CORS_ORIGIN.split(','));
+        allowedOrigins.push(...process.env.CORS_ORIGIN.split(","));
       }
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);

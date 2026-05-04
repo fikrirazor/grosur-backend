@@ -8,8 +8,7 @@ import { Pool } from "pg";
 const prismaClientSingleton = () => {
   const pool = new Pool({ connectionString: config.databaseUrl });
   return new PrismaClient({
-    log:
-      config.nodeEnv === "development" ? ["error", "warn"] : ["error"],
+    log: config.nodeEnv === "development" ? ["error", "warn"] : ["error"],
     adapter: new PrismaPg(pool),
   });
 };

@@ -8,7 +8,7 @@ import { sendResponse } from "../utils/response.util";
 export const getAdminOrders = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const user = (req as any).user;
@@ -21,7 +21,12 @@ export const getAdminOrders = async (
     if (user.role === "STORE_ADMIN") {
       // Store admin can only see orders from their managed store
       if (!user.managedStoreId) {
-        return sendResponse(res, 403, false, "You are not assigned to any store");
+        return sendResponse(
+          res,
+          403,
+          false,
+          "You are not assigned to any store",
+        );
       }
       where.storeId = user.managedStoreId;
     } else if (user.role === "SUPER_ADMIN") {
@@ -87,7 +92,7 @@ export const getAdminOrders = async (
 export const getAdminOrderDetail = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userMiddleware = (req as any).user;
@@ -98,7 +103,9 @@ export const getAdminOrderDetail = async (
       include: {
         user: { select: { name: true, email: true } },
         store: { select: { name: true } },
-        items: { include: { product: { select: { name: true, images: true } } } },
+        items: {
+          include: { product: { select: { name: true, images: true } } },
+        },
         address: true,
       },
     });
@@ -108,8 +115,16 @@ export const getAdminOrderDetail = async (
     }
 
     // Role-based access control
-    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
-      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    if (
+      userMiddleware.role === "STORE_ADMIN" &&
+      order.storeId !== userMiddleware.managedStoreId
+    ) {
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Forbidden: This order belongs to another store",
+      );
     }
 
     sendResponse(res, 200, true, "Order detail retrieved successfully", order);
@@ -124,7 +139,7 @@ export const getAdminOrderDetail = async (
 export const confirmPayment = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userMiddleware = (req as any).user;
@@ -140,12 +155,25 @@ export const confirmPayment = async (
     }
 
     if (order.status !== "WAITING_CONFIRMATION") {
-      return sendResponse(res, 400, false, "Order is not waiting for confirmation");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Order is not waiting for confirmation",
+      );
     }
 
     // Role-based access control
-    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
-      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    if (
+      userMiddleware.role === "STORE_ADMIN" &&
+      order.storeId !== userMiddleware.managedStoreId
+    ) {
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Forbidden: This order belongs to another store",
+      );
     }
 
     let newStatus: any;
@@ -169,7 +197,12 @@ export const confirmPayment = async (
         paymentProof: null, // Clear proof so user can re-upload
       };
     } else {
-      return sendResponse(res, 400, false, "Invalid action. Use 'accept' or 'reject'");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Invalid action. Use 'accept' or 'reject'",
+      );
     }
 
     const updatedOrder = await prisma.order.update({
@@ -180,7 +213,13 @@ export const confirmPayment = async (
       },
     });
 
-    sendResponse(res, 200, true, `Payment ${action === "accept" ? "accepted" : "rejected"} successfully`, updatedOrder);
+    sendResponse(
+      res,
+      200,
+      true,
+      `Payment ${action === "accept" ? "accepted" : "rejected"} successfully`,
+      updatedOrder,
+    );
   } catch (error) {
     next(error);
   }
@@ -192,7 +231,7 @@ export const confirmPayment = async (
 export const sendOrder = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userMiddleware = (req as any).user;
@@ -207,12 +246,25 @@ export const sendOrder = async (
     }
 
     if (order.status !== "PROCESSED") {
-      return sendResponse(res, 400, false, "Order must be in PROCESSED status before shipping");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Order must be in PROCESSED status before shipping",
+      );
     }
 
     // Role-based access control
-    if (userMiddleware.role === "STORE_ADMIN" && order.storeId !== userMiddleware.managedStoreId) {
-      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    if (
+      userMiddleware.role === "STORE_ADMIN" &&
+      order.storeId !== userMiddleware.managedStoreId
+    ) {
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Forbidden: This order belongs to another store",
+      );
     }
 
     const updatedOrder = await prisma.order.update({
@@ -226,7 +278,13 @@ export const sendOrder = async (
       },
     });
 
-    sendResponse(res, 200, true, "Order status updated to SENT successfully", updatedOrder);
+    sendResponse(
+      res,
+      200,
+      true,
+      "Order status updated to SENT successfully",
+      updatedOrder,
+    );
   } catch (error) {
     next(error);
   }
@@ -240,7 +298,7 @@ export const sendOrder = async (
 export const cancelOrder = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const admin = (req as any).user;
@@ -259,14 +317,31 @@ export const cancelOrder = async (
     }
 
     // Role-based access control
-    if (admin.role === "STORE_ADMIN" && order.storeId !== admin.managedStoreId) {
-      return sendResponse(res, 403, false, "Forbidden: This order belongs to another store");
+    if (
+      admin.role === "STORE_ADMIN" &&
+      order.storeId !== admin.managedStoreId
+    ) {
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Forbidden: This order belongs to another store",
+      );
     }
 
     // Can only cancel before SENT
-    const allowedStatuses: string[] = ["WAITING_PAYMENT", "WAITING_CONFIRMATION", "PROCESSED"];
+    const allowedStatuses: string[] = [
+      "WAITING_PAYMENT",
+      "WAITING_CONFIRMATION",
+      "PROCESSED",
+    ];
     if (!allowedStatuses.includes(order.status)) {
-      return sendResponse(res, 400, false, `Order with status ${order.status} cannot be cancelled`);
+      return sendResponse(
+        res,
+        400,
+        false,
+        `Order with status ${order.status} cannot be cancelled`,
+      );
     }
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
@@ -317,7 +392,13 @@ export const cancelOrder = async (
       return updated;
     });
 
-    sendResponse(res, 200, true, "Order cancelled successfully and stock returned", updatedOrder);
+    sendResponse(
+      res,
+      200,
+      true,
+      "Order cancelled successfully and stock returned",
+      updatedOrder,
+    );
   } catch (error) {
     next(error);
   }

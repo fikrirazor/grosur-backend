@@ -19,7 +19,7 @@ router.post("/validate", voucherController.validateVoucher);
 // Use voucher (during order creation)
 router.post("/use", voucherController.useVoucher);
 
-// Claim generic voucher template 
+// Claim generic voucher template
 router.post("/claim", voucherController.claimVoucher);
 
 export default router;

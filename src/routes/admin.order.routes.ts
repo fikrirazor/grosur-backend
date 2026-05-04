@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { getAdminOrders, getAdminOrderDetail, confirmPayment, sendOrder, cancelOrder } from "../controllers/admin.order.controller";
+import {
+  getAdminOrders,
+  getAdminOrderDetail,
+  confirmPayment,
+  sendOrder,
+  cancelOrder,
+} from "../controllers/admin.order.controller";
 import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 
 const router = Router();

@@ -7,7 +7,11 @@ import { UpdateStockInput, TransferStockInput } from "../types/stock.types";
 /**
  * Validate source stock has enough quantity
  */
-const validateSourceStock = async (productId: string, storeId: string, quantity: number) => {
+const validateSourceStock = async (
+  productId: string,
+  storeId: string,
+  quantity: number,
+) => {
   const stock = await prisma.stock.findUnique({
     where: { productId_storeId: { productId, storeId } },
     include: { product: true, store: true },
@@ -22,7 +26,7 @@ const validateSourceStock = async (productId: string, storeId: string, quantity:
       400,
       `Insufficient stock. Available: ${stock.quantity}, Requested: ${quantity}`,
       true,
-      "INSUFFICIENT_STOCK"
+      "INSUFFICIENT_STOCK",
     );
   }
 
@@ -32,7 +36,11 @@ const validateSourceStock = async (productId: string, storeId: string, quantity:
 /**
  * Get or create destination stock
  */
-const getOrCreateDestinationStock = async (tx: any, productId: string, storeId: string) => {
+const getOrCreateDestinationStock = async (
+  tx: any,
+  productId: string,
+  storeId: string,
+) => {
   let stock = await tx.stock.findUnique({
     where: { productId_storeId: { productId, storeId } },
     include: { product: true, store: true },
@@ -51,7 +59,11 @@ const getOrCreateDestinationStock = async (tx: any, productId: string, storeId: 
 /**
  * Update stock quantity in transaction
  */
-const updateStockQuantity = async (tx: any, stockId: string, newQty: number) => {
+const updateStockQuantity = async (
+  tx: any,
+  stockId: string,
+  newQty: number,
+) => {
   return await tx.stock.update({
     where: { id: stockId },
     data: { quantity: newQty },
@@ -70,7 +82,7 @@ const createJournalInTransaction = async (
   change: number,
   type: StockJournalType,
   reason: string,
-  userId: string
+  userId: string,
 ) => {
   await tx.stockJournal.create({
     data: {
@@ -177,18 +189,31 @@ export const transferStock = async (data: TransferStockInput) => {
 
   // Validate same store
   if (fromStoreId === toStoreId) {
-    throw new AppError(400, "Cannot transfer to the same store", true, "SAME_STORE");
+    throw new AppError(
+      400,
+      "Cannot transfer to the same store",
+      true,
+      "SAME_STORE",
+    );
   }
 
   // Validate source stock
-  const sourceStock = await validateSourceStock(productId, fromStoreId, quantity);
+  const sourceStock = await validateSourceStock(
+    productId,
+    fromStoreId,
+    quantity,
+  );
 
   // Execute atomic transfer
   return await prisma.$transaction(async (tx: any) => {
     // 1. Reduce source stock
     const sourceOldQty = sourceStock.quantity;
     const sourceNewQty = sourceOldQty - quantity;
-    const updatedSource = await updateStockQuantity(tx, sourceStock.id, sourceNewQty);
+    const updatedSource = await updateStockQuantity(
+      tx,
+      sourceStock.id,
+      sourceNewQty,
+    );
 
     // 2. Create OUT journal for source
     await createJournalInTransaction(
@@ -199,11 +224,15 @@ export const transferStock = async (data: TransferStockInput) => {
       -quantity,
       "TRANSFER",
       reason || `Transfer to store ${toStoreId}`,
-      userId
+      userId,
     );
 
     // 3. Get or create destination stock
-    const destStock = await getOrCreateDestinationStock(tx, productId, toStoreId);
+    const destStock = await getOrCreateDestinationStock(
+      tx,
+      productId,
+      toStoreId,
+    );
 
     // 4. Increase destination stock
     const destOldQty = destStock.quantity;
@@ -219,7 +248,7 @@ export const transferStock = async (data: TransferStockInput) => {
       quantity,
       "TRANSFER",
       reason || `Transfer from store ${fromStoreId}`,
-      userId
+      userId,
     );
 
     return {

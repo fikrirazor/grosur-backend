@@ -1,7 +1,10 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 
-import { CreateDiscountInput, UpdateDiscountInput } from "../types/discount.types";
+import {
+  CreateDiscountInput,
+  UpdateDiscountInput,
+} from "../types/discount.types";
 
 /**
  * Validate product exists in store
@@ -12,14 +15,25 @@ const validateProductInStore = async (productId: string, storeId: string) => {
   });
 
   if (!stock) {
-    throw new AppError(404, "Product not available in this store", true, "PRODUCT_NOT_IN_STORE");
+    throw new AppError(
+      404,
+      "Product not available in this store",
+      true,
+      "PRODUCT_NOT_IN_STORE",
+    );
   }
 };
 
 /**
  * Validate discount doesn't overlap with existing active discount for same product
  */
-const checkOverlappingDiscount = async (productId: string | null | undefined, storeId: string, startDate: Date, endDate: Date, excludeId?: string) => {
+const checkOverlappingDiscount = async (
+  productId: string | null | undefined,
+  storeId: string,
+  startDate: Date,
+  endDate: Date,
+  excludeId?: string,
+) => {
   if (!productId) return; // No check needed for store-wide discounts
 
   const where: any = {
@@ -37,7 +51,12 @@ const checkOverlappingDiscount = async (productId: string | null | undefined, st
   const existing = await prisma.discount.findFirst({ where });
 
   if (existing) {
-    throw new AppError(409, "Overlapping discount already exists for this product", true, "DISCOUNT_OVERLAP");
+    throw new AppError(
+      409,
+      "Overlapping discount already exists for this product",
+      true,
+      "DISCOUNT_OVERLAP",
+    );
   }
 };
 
@@ -55,11 +74,20 @@ const verifyStoreOwnership = async (storeId: string, userId: string) => {
   }
 
   if (user.role === "STORE_ADMIN" && user.managedStoreId !== storeId) {
-    throw new AppError(403, "Access denied. You can only manage discounts for your own store", true, "FORBIDDEN");
+    throw new AppError(
+      403,
+      "Access denied. You can only manage discounts for your own store",
+      true,
+      "FORBIDDEN",
+    );
   }
 };
 
-export const createDiscount = async (data: CreateDiscountInput, userId: string, userRole: string) => {
+export const createDiscount = async (
+  data: CreateDiscountInput,
+  userId: string,
+  userRole: string,
+) => {
   const { storeId, productId, type, value, startDate, endDate } = data;
 
   // Verify store ownership for STORE_ADMIN
@@ -101,7 +129,7 @@ export const updateDiscount = async (
   discountId: string,
   data: UpdateDiscountInput,
   userId: string,
-  userRole: string
+  userRole: string,
 ) => {
   // Find existing discount
   const discount = await prisma.discount.findUnique({
@@ -123,13 +151,26 @@ export const updateDiscount = async (
   }
 
   // Check overlaps if dates or product changed
-  if ((data.startDate || data.endDate || data.productId) && data.isActive !== false) {
+  if (
+    (data.startDate || data.endDate || data.productId) &&
+    data.isActive !== false
+  ) {
     const checkProductId = data.productId || discount.productId;
-    const checkStartDate = data.startDate ? new Date(data.startDate) : discount.startDate;
-    const checkEndDate = data.endDate ? new Date(data.endDate) : discount.endDate;
+    const checkStartDate = data.startDate
+      ? new Date(data.startDate)
+      : discount.startDate;
+    const checkEndDate = data.endDate
+      ? new Date(data.endDate)
+      : discount.endDate;
 
     if (checkEndDate) {
-      await checkOverlappingDiscount(checkProductId, discount.storeId, checkStartDate, checkEndDate, discountId);
+      await checkOverlappingDiscount(
+        checkProductId,
+        discount.storeId,
+        checkStartDate,
+        checkEndDate,
+        discountId,
+      );
     }
   }
 
@@ -139,8 +180,12 @@ export const updateDiscount = async (
     data: {
       ...data,
       value: data.value ? data.value.toString() : undefined,
-      minSpend: data.minSpend !== undefined ? data.minSpend.toString() : undefined,
-      maxDiscount: data.maxDiscount !== undefined ? data.maxDiscount.toString() : undefined,
+      minSpend:
+        data.minSpend !== undefined ? data.minSpend.toString() : undefined,
+      maxDiscount:
+        data.maxDiscount !== undefined
+          ? data.maxDiscount.toString()
+          : undefined,
     },
     include: {
       product: { select: { id: true, name: true } },
@@ -149,7 +194,11 @@ export const updateDiscount = async (
   });
 };
 
-export const deleteDiscount = async (discountId: string, userId: string, userRole: string) => {
+export const deleteDiscount = async (
+  discountId: string,
+  userId: string,
+  userRole: string,
+) => {
   // Find discount
   const discount = await prisma.discount.findUnique({
     where: { id: discountId },
@@ -173,7 +222,11 @@ export const deleteDiscount = async (discountId: string, userId: string, userRol
   return { success: true, message: "Discount deactivated successfully" };
 };
 
-export const getStoreDiscounts = async (storeId: string, userId: string, userRole: string) => {
+export const getStoreDiscounts = async (
+  storeId: string,
+  userId: string,
+  userRole: string,
+) => {
   // Verify ownership for STORE_ADMIN
   if (userRole === "STORE_ADMIN") {
     await verifyStoreOwnership(storeId, userId);

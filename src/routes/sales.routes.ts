@@ -9,7 +9,7 @@ router.get(
   "/",
   verifyToken,
   authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
-  salesController.getSalesReport
+  salesController.getSalesReport,
 );
 
 export default router;

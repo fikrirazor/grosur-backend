@@ -25,11 +25,21 @@ const checkExpiry = (voucher: any) => {
  */
 const checkUsage = (voucher: any) => {
   if (voucher.isUsed) {
-    throw new AppError(400, "Voucher already used", true, "VOUCHER_ALREADY_USED");
+    throw new AppError(
+      400,
+      "Voucher already used",
+      true,
+      "VOUCHER_ALREADY_USED",
+    );
   }
 
   if (voucher.qty <= 0) {
-    throw new AppError(400, "Voucher quota exhausted", true, "VOUCHER_EXHAUSTED");
+    throw new AppError(
+      400,
+      "Voucher quota exhausted",
+      true,
+      "VOUCHER_EXHAUSTED",
+    );
   }
 };
 
@@ -42,7 +52,7 @@ const checkEligibility = (voucher: any, cartTotal: number) => {
       400,
       `Minimum spend required: Rp ${Number(voucher.minSpend).toLocaleString("id-ID")}`,
       true,
-      "MIN_SPEND_NOT_MET"
+      "MIN_SPEND_NOT_MET",
     );
   }
 };
@@ -52,18 +62,32 @@ const checkEligibility = (voucher: any, cartTotal: number) => {
  */
 const checkProductEligibility = async (voucher: any, productId?: string) => {
   if (voucher.type === "PRODUCT" && !productId) {
-    throw new AppError(400, "Product ID required for product voucher", true, "PRODUCT_ID_REQUIRED");
+    throw new AppError(
+      400,
+      "Product ID required for product voucher",
+      true,
+      "PRODUCT_ID_REQUIRED",
+    );
   }
 
   if (voucher.productId && voucher.productId !== productId) {
-    throw new AppError(400, "Voucher not valid for this product", true, "INVALID_PRODUCT");
+    throw new AppError(
+      400,
+      "Voucher not valid for this product",
+      true,
+      "INVALID_PRODUCT",
+    );
   }
 };
 
 /**
  * Calculate discount amount based on voucher type
  */
-const calculateDiscount = (voucher: any, cartTotal: number, productPrice?: number) => {
+const calculateDiscount = (
+  voucher: any,
+  cartTotal: number,
+  productPrice?: number,
+) => {
   let discount = 0;
 
   if (voucher.type === "PERCENT") {
@@ -101,7 +125,12 @@ export const validateVoucher = async (data: ValidateVoucherInput) => {
 
   // Check if voucher belongs to user
   if (voucher.userId !== userId) {
-    throw new AppError(403, "Voucher not owned by user", true, "VOUCHER_NOT_OWNED");
+    throw new AppError(
+      403,
+      "Voucher not owned by user",
+      true,
+      "VOUCHER_NOT_OWNED",
+    );
   }
 
   // Run validations
@@ -127,7 +156,11 @@ export const validateVoucher = async (data: ValidateVoucherInput) => {
   };
 };
 
-export const useVoucher = async (voucherCode: string, _userId: string, orderId: string) => {
+export const useVoucher = async (
+  voucherCode: string,
+  _userId: string,
+  orderId: string,
+) => {
   // Atomic transaction to prevent race condition
   return await prisma.$transaction(async (tx: any) => {
     // Find voucher with lock
@@ -168,13 +201,18 @@ export const useVoucher = async (voucherCode: string, _userId: string, orderId: 
 export const claimVoucher = async (userId: string, payload: any) => {
   // Check if user already claimed this specific template
   const codeGen = `${payload.id}-${userId.substring(0, 5)}`.toUpperCase();
-  
+
   const existing = await prisma.voucher.findUnique({
-    where: { code: codeGen }
+    where: { code: codeGen },
   });
 
   if (existing) {
-    throw new AppError(400, "Voucher ini sudah diklaim sebelumnya.", true, "VOUCHER_ALREADY_CLAIMED");
+    throw new AppError(
+      400,
+      "Voucher ini sudah diklaim sebelumnya.",
+      true,
+      "VOUCHER_ALREADY_CLAIMED",
+    );
   }
 
   // Create voucher
@@ -192,7 +230,7 @@ export const claimVoucher = async (userId: string, payload: any) => {
       qty: 1,
       isUsed: false,
       expiryDate,
-    }
+    },
   });
 
   return voucher;
@@ -204,7 +242,7 @@ export const claimVoucher = async (userId: string, payload: any) => {
  */
 export const issueReferralVouchers = async (
   newUserId: string,
-  referrerId: string
+  referrerId: string,
 ) => {
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 30); // 30-day expiry
@@ -261,5 +299,3 @@ export const getReferralInvitees = async (referrerId: string) => {
 
   return invitees;
 };
-
-

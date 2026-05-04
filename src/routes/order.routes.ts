@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { 
-  createOrder, 
-  getOrders, 
+import {
+  createOrder,
+  getOrders,
   getOrderDetails,
   validateStock,
   uploadPaymentProof,
   cancelExpiredOrders,
   cancelOrder,
   confirmOrderReceipt,
-  autoConfirmShippedOrders
+  autoConfirmShippedOrders,
 } from "../controllers/order.controller";
 import { upload } from "../middlewares/upload.middleware";
 import { verifyToken } from "../middlewares/auth.middleware";
@@ -30,7 +30,11 @@ router.get("/validate-stock", validateStock);
  * @desc    Upload payment proof for an order (jpg, jpeg, png only, max 1MB)
  * @access  Private
  */
-router.post("/:id/payment-proof", upload.single("paymentProof"), uploadPaymentProof);
+router.post(
+  "/:id/payment-proof",
+  upload.single("paymentProof"),
+  uploadPaymentProof,
+);
 
 /**
  * @route   POST /api/orders/cancel-expired

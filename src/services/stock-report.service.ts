@@ -125,7 +125,7 @@ export const getStockReport = async (
   month?: number,
   year?: number,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
 ) => {
   // Validate role-based access
   if (role === "STORE_ADMIN") {
@@ -135,7 +135,12 @@ export const getStockReport = async (
     });
 
     if (!user?.managedStoreId) {
-      throw new AppError(403, "Store admin must have assigned store", true, "NO_STORE_ASSIGNED");
+      throw new AppError(
+        403,
+        "Store admin must have assigned store",
+        true,
+        "NO_STORE_ASSIGNED",
+      );
     }
 
     storeId = user.managedStoreId;
@@ -154,7 +159,8 @@ export const getStockReport = async (
   }
 
   // Calculate period label
-  const periodLabel = month && year ? `${month}/${year}` : year ? `${year}` : "All Time";
+  const periodLabel =
+    month && year ? `${month}/${year}` : year ? `${year}` : "All Time";
 
   // Fetch paginated stock journals
   const skip = (page - 1) * limit;
@@ -209,7 +215,10 @@ export const getStockReport = async (
       where: { storeId: store.storeId },
       select: { quantity: true },
     });
-    store.finalStock = stocks.reduce((sum: number, s: any) => sum + s.quantity, 0);
+    store.finalStock = stocks.reduce(
+      (sum: number, s: any) => sum + s.quantity,
+      0,
+    );
   }
 
   // Build summary

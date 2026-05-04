@@ -1,4 +1,3 @@
-
 // Input untuk update stock (masuk/keluar)
 export interface UpdateStockInput {
   productId: string;
@@ -17,4 +16,3 @@ export interface TransferStockInput {
   reason?: string;
   userId: string;
 }
-

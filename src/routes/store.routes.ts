@@ -1,16 +1,16 @@
 // src/routes/store.routes.ts
 import { Router } from "express";
 import {
-    getAssignedStore, 
-    getFallbackStore, 
-    getNearestStore,
-    createStore, 
-    getAllStores, 
-    updateStore, 
-    deleteStore, 
-    assignStoreAdmin,
-    getStores,
-    setMainStore
+  getAssignedStore,
+  getFallbackStore,
+  getNearestStore,
+  createStore,
+  getAllStores,
+  updateStore,
+  deleteStore,
+  assignStoreAdmin,
+  getStores,
+  setMainStore,
 } from "../controllers/store.controller";
 import { verifyToken, requireRole } from "../middlewares/auth.middleware";
 import { Role } from "../generated/prisma";
@@ -28,9 +28,23 @@ router.get("/", getAllStores); // Public view of all stores for some uses
 // We use a different pattern here to allow specific public routes above
 router.post("/", verifyToken, requireRole([Role.SUPER_ADMIN]), createStore);
 router.patch("/:id", verifyToken, requireRole([Role.SUPER_ADMIN]), updateStore);
-router.delete("/:id", verifyToken, requireRole([Role.SUPER_ADMIN]), deleteStore);
-router.patch("/:id/assign", verifyToken, requireRole([Role.SUPER_ADMIN]), assignStoreAdmin);
-router.patch("/:id/set-main", verifyToken, requireRole([Role.SUPER_ADMIN]), setMainStore);
-
+router.delete(
+  "/:id",
+  verifyToken,
+  requireRole([Role.SUPER_ADMIN]),
+  deleteStore,
+);
+router.patch(
+  "/:id/assign",
+  verifyToken,
+  requireRole([Role.SUPER_ADMIN]),
+  assignStoreAdmin,
+);
+router.patch(
+  "/:id/set-main",
+  verifyToken,
+  requireRole([Role.SUPER_ADMIN]),
+  setMainStore,
+);
 
 export default router;

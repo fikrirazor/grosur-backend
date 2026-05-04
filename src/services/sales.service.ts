@@ -33,9 +33,11 @@ const buildDateFilter = (month?: number, year?: number) => {
  * Get monthly trend data for a specific year or the last 12 months
  */
 const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
-  const endDate = targetYear ? new Date(targetYear, 11, 31, 23, 59, 59) : new Date();
+  const endDate = targetYear
+    ? new Date(targetYear, 11, 31, 23, 59, 59)
+    : new Date();
   const startDate = targetYear ? new Date(targetYear, 0, 1) : new Date();
-  
+
   if (!targetYear) {
     startDate.setFullYear(endDate.getFullYear() - 1);
     startDate.setDate(1);
@@ -63,12 +65,15 @@ const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
   });
 
   const monthsMap = new Map();
-  
+
   if (targetYear) {
     // Initialize 12 months of the year
     for (let i = 0; i < 12; i++) {
       const d = new Date(targetYear, i, 1);
-      const label = d.toLocaleString("id-ID", { month: "short", year: "2-digit" });
+      const label = d.toLocaleString("id-ID", {
+        month: "short",
+        year: "2-digit",
+      });
       monthsMap.set(label, { month: label, revenue: 0, orders: 0 });
     }
   } else {
@@ -76,13 +81,19 @@ const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
     for (let i = 0; i < 12; i++) {
       const d = new Date();
       d.setMonth(endDate.getMonth() - (11 - i));
-      const label = d.toLocaleString("id-ID", { month: "short", year: "2-digit" });
+      const label = d.toLocaleString("id-ID", {
+        month: "short",
+        year: "2-digit",
+      });
       monthsMap.set(label, { month: label, revenue: 0, orders: 0 });
     }
   }
 
   orders.forEach((order: any) => {
-    const label = order.createdAt.toLocaleString("id-ID", { month: "short", year: "2-digit" });
+    const label = order.createdAt.toLocaleString("id-ID", {
+      month: "short",
+      year: "2-digit",
+    });
     if (monthsMap.has(label)) {
       const data = monthsMap.get(label);
       data.revenue += Number(order.totalAmount);
@@ -96,11 +107,7 @@ const getMonthlyTrends = async (storeId?: string, targetYear?: number) => {
 /**
  * Get paginated sales data with aggregation
  */
-const getPaginatedSales = async (
-  where: any,
-  page: number,
-  limit: number
-) => {
+const getPaginatedSales = async (where: any, page: number, limit: number) => {
   const skip = (page - 1) * limit;
 
   const [orders, total] = await Promise.all([
@@ -208,7 +215,7 @@ export const getSalesReport = async (
   month?: number,
   year?: number,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
 ) => {
   // Validate role-based access
   if (role === "STORE_ADMIN") {
@@ -218,7 +225,12 @@ export const getSalesReport = async (
     });
 
     if (!user?.managedStoreId) {
-      throw new AppError(403, "Store admin must have assigned store", true, "NO_STORE_ASSIGNED");
+      throw new AppError(
+        403,
+        "Store admin must have assigned store",
+        true,
+        "NO_STORE_ASSIGNED",
+      );
     }
 
     storeId = user.managedStoreId;
@@ -245,11 +257,18 @@ export const getSalesReport = async (
   // Calculate aggregations
   const byProduct = aggregateByProduct(orders);
   const byCategory = aggregateByCategory(orders);
-  
+
   // Calculate total summary stats
-  const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.totalAmount), 0);
-  const totalDiscount = orders.reduce((sum: number, o: any) => sum + Number(o.discountAmount), 0);
-  const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+  const totalRevenue = orders.reduce(
+    (sum: number, o: any) => sum + Number(o.totalAmount),
+    0,
+  );
+  const totalDiscount = orders.reduce(
+    (sum: number, o: any) => sum + Number(o.discountAmount),
+    0,
+  );
+  const averageOrderValue =
+    orders.length > 0 ? totalRevenue / orders.length : 0;
 
   // Get trends
   const trends = await getMonthlyTrends(storeId, year);
@@ -297,13 +316,21 @@ export const getSalesReportCSV = async (
   role: string,
   storeId?: string,
   month?: number,
-  year?: number
+  year?: number,
 ) => {
   // Use existing logic but without pagination (get all results for the period)
-  const report = await getSalesReport(userId, role, storeId, month, year, 1, 1000000);
-  
+  const report = await getSalesReport(
+    userId,
+    role,
+    storeId,
+    month,
+    year,
+    1,
+    1000000,
+  );
+
   const transactions = report.data.transactions;
-  
+
   if (transactions.length === 0) {
     return "No transactions found for the selected period";
   }
@@ -317,20 +344,22 @@ export const getSalesReportCSV = async (
     "Discount",
     "Total",
     "Status",
-    "Payment Method"
+    "Payment Method",
   ].join(",");
 
-  const rows = transactions.map((t: any) => [
-    t.orderNumber,
-    new Date(t.createdAt).toISOString(),
-    `"${t.customerName}"`,
-    t.customerEmail,
-    t.totalAmount,
-    t.discountAmount,
-    t.finalAmount,
-    t.status,
-    t.paymentMethod
-  ].join(","));
+  const rows = transactions.map((t: any) =>
+    [
+      t.orderNumber,
+      new Date(t.createdAt).toISOString(),
+      `"${t.customerName}"`,
+      t.customerEmail,
+      t.totalAmount,
+      t.discountAmount,
+      t.finalAmount,
+      t.status,
+      t.paymentMethod,
+    ].join(","),
+  );
 
   return [header, ...rows].join("\n");
 };

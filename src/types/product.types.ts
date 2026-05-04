@@ -1,4 +1,3 @@
-
 // ─── Query & Input ────────────────────────────────────────────────────────────
 
 // untuk filter product by store
@@ -79,4 +78,4 @@ export interface PaginationMeta {
   limit: number;
   totalPage: number;
   hasMore: boolean;
-}
+}

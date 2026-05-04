@@ -11,7 +11,11 @@ export const createDiscount = async (
     const userId = user.id;
     const userRole = user.role;
 
-    const discount = await discountService.createDiscount(req.body, userId, userRole);
+    const discount = await discountService.createDiscount(
+      req.body,
+      userId,
+      userRole,
+    );
 
     res.status(201).json({
       success: true,
@@ -34,7 +38,12 @@ export const updateDiscount = async (
     const userId = user.id;
     const userRole = user.role;
 
-    const discount = await discountService.updateDiscount(discountId, req.body, userId, userRole);
+    const discount = await discountService.updateDiscount(
+      discountId,
+      req.body,
+      userId,
+      userRole,
+    );
 
     res.status(200).json({
       success: true,
@@ -57,7 +66,11 @@ export const deleteDiscount = async (
     const userId = user.id;
     const userRole = user.role;
 
-    const result = await discountService.deleteDiscount(discountId, userId, userRole);
+    const result = await discountService.deleteDiscount(
+      discountId,
+      userId,
+      userRole,
+    );
 
     res.status(200).json(result);
   } catch (error) {
@@ -84,7 +97,11 @@ export const getStoreDiscounts = async (
       return;
     }
 
-    const discounts = await discountService.getStoreDiscounts(storeId, userId, userRole);
+    const discounts = await discountService.getStoreDiscounts(
+      storeId,
+      userId,
+      userRole,
+    );
 
     res.status(200).json({
       success: true,

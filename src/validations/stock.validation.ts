@@ -11,6 +11,9 @@ export const transferStockSchema = z.object({
   productId: z.string().uuid("Invalid product ID"),
   fromStoreId: z.string().uuid("Invalid source store ID"),
   toStoreId: z.string().uuid("Invalid destination store ID"),
-  quantity: z.number().int("Quantity must be an integer").positive("Quantity must be positive"),
+  quantity: z
+    .number()
+    .int("Quantity must be an integer")
+    .positive("Quantity must be positive"),
   reason: z.string().min(1, "Reason is required").optional(),
 });

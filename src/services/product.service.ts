@@ -20,7 +20,7 @@ import {
 } from "./helpers/product.helper";
 
 export const getPublicProducts = async (
-  query: ProductQuery
+  query: ProductQuery,
 ): Promise<{ items: ProductListItem[]; meta: PaginationMeta }> => {
   const { storeId, search, categoryId, page, limit } = query;
   const now = new Date();
@@ -46,7 +46,7 @@ export const getPublicProducts = async (
 
 export const getPublicProductDetail = async (
   slug: string,
-  storeId: string
+  storeId: string,
 ): Promise<ProductDetailItem | null> => {
   const now = new Date();
   const stock = await prisma.stock.findFirst({
@@ -78,8 +78,10 @@ export const createProduct = async (data: CreateProductInput) => {
     prisma.category.findUnique({ where: { id: categoryId } }),
   ]);
 
-  if (!store) throw new AppError(404, "Store not found", true, "STORE_NOT_FOUND");
-  if (!category) throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
+  if (!store)
+    throw new AppError(404, "Store not found", true, "STORE_NOT_FOUND");
+  if (!category)
+    throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
 
   const existingProduct = await prisma.product.findFirst({
     where: {
@@ -89,7 +91,12 @@ export const createProduct = async (data: CreateProductInput) => {
   });
 
   if (existingProduct) {
-    throw new AppError(409, `Product "${name}" already exists in this store`, true, "PRODUCT_DUPLICATE");
+    throw new AppError(
+      409,
+      `Product "${name}" already exists in this store`,
+      true,
+      "PRODUCT_DUPLICATE",
+    );
   }
 
   return await prisma.$transaction(async (tx) => {
@@ -129,7 +136,12 @@ export const updateProduct = async (
     });
 
     if (duplicate) {
-      throw new AppError(409, `Product "${data.name}" already exists in this store`, true, "PRODUCT_DUPLICATE");
+      throw new AppError(
+        409,
+        `Product "${data.name}" already exists in this store`,
+        true,
+        "PRODUCT_DUPLICATE",
+      );
     }
   }
 
@@ -147,7 +159,10 @@ export const updateProduct = async (
   });
 };
 
-export const deleteProduct = async (productIdOrSlug: string, storeId: string) => {
+export const deleteProduct = async (
+  productIdOrSlug: string,
+  storeId: string,
+) => {
   const product = await findProductOrThrow(productIdOrSlug, storeId);
   await prisma.product.update({
     where: { id: product.id },
@@ -179,7 +194,7 @@ export const getProductDetail = async (
   productId: string,
   userLat?: number,
   userLong?: number,
-  storeId?: string
+  storeId?: string,
 ) => {
   const targetStoreId = await resolveTargetStoreId(storeId, userLat, userLong);
   const product = await findProductOrThrow(productId, targetStoreId);
@@ -192,6 +207,3 @@ export const getProductDetail = async (
     storeId: targetStoreId,
   };
 };
-
-
-

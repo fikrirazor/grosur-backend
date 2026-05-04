@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { 
-  getBanners, 
-  createBanner, 
-  updateBanner, 
-  deleteBanner, 
+import {
+  getBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
   getAllBannersAdmin,
-  getActiveDiscounts
+  getActiveDiscounts,
 } from "../controllers/banner.controller";
 import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 import { upload } from "../middlewares/upload.middleware";

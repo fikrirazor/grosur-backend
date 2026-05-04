@@ -1,7 +1,9 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
-import { CreateCategoryInput, UpdateCategoryInput } from "../types/category.types";
-
+import {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+} from "../types/category.types";
 
 export const getCategories = async () => {
   return await prisma.category.findMany({
@@ -60,12 +62,7 @@ export const updateCategory = async (
   });
 
   if (!existingCategory) {
-    throw new AppError(
-      404,
-      "Category not found",
-      true,
-      "CATEGORY_NOT_FOUND",
-    );
+    throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
   }
 
   // Jika nama diupdate, cek kalau ada kategori duplikat
@@ -119,12 +116,7 @@ export const deleteCategory = async (categoryId: string) => {
   });
 
   if (!existingCategory) {
-    throw new AppError(
-      404,
-      "Category not found",
-      true,
-      "CATEGORY_NOT_FOUND",
-    );
+    throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
   }
 
   // Check kalau kategori ada produk

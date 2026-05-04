@@ -2,14 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
 
-
 /**
  * Validates stock for all items in the user's cart across all stores.
  */
 export const validateStock = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -33,7 +32,9 @@ export const validateStock = async (
     }
 
     if (outOfStock.length > 0) {
-      return sendResponse(res, 200, false, "Stock insufficient", { outOfStock });
+      return sendResponse(res, 200, false, "Stock insufficient", {
+        outOfStock,
+      });
     }
 
     sendResponse(res, 200, true, "Stock validated successfully");
@@ -48,14 +49,19 @@ export const validateStock = async (
 export const createOrder = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
     const { addressId, paymentMethod, notes } = req.body;
 
     if (!addressId || !paymentMethod) {
-      return sendResponse(res, 400, false, "Address and payment method are required");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Address and payment method are required",
+      );
     }
 
     // 1. Get User Cart and Address
@@ -69,12 +75,14 @@ export const createOrder = async (
       }),
     ]);
 
-    if (!cartItems.length) return sendResponse(res, 400, false, "Cart is empty");
+    if (!cartItems.length)
+      return sendResponse(res, 400, false, "Cart is empty");
     if (!address) return sendResponse(res, 400, false, "Address not found");
 
     // 2. Find Nearest Store to the address
     const stores = await prisma.store.findMany({ where: { isActive: true } });
-    if (!stores.length) return sendResponse(res, 500, false, "No active stores available");
+    if (!stores.length)
+      return sendResponse(res, 500, false, "No active stores available");
 
     let nearestStore = stores[0];
     let minDistance = Infinity;
@@ -83,7 +91,12 @@ export const createOrder = async (
     const userLng = address.longitude || 0;
 
     for (const store of stores) {
-      const dist = calculateDistance(userLat, userLng, store.latitude, store.longitude);
+      const dist = calculateDistance(
+        userLat,
+        userLng,
+        store.latitude,
+        store.longitude,
+      );
       if (dist < minDistance) {
         minDistance = dist;
         nearestStore = store;
@@ -125,21 +138,21 @@ export const createOrder = async (
           notes,
           status: "WAITING_PAYMENT",
           items: {
-            create: orderItemsData.map(item => ({
+            create: orderItemsData.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
               subtotal: item.subtotal,
-              stockId: item.stockId
-            }))
-          }
+              stockId: item.stockId,
+            })),
+          },
         },
       });
 
       // Stock logic (Simplified: Deduct from the nearest store's stock)
       // Note: In real app, you'd check if nearestStore actually HAS the stock.
       // If not, you might need to split or pull from other stores.
-      
+
       // Clear Cart
       await tx.cart.deleteMany({ where: { userId } });
 
@@ -158,7 +171,7 @@ export const createOrder = async (
 export const getOrders = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -187,7 +200,11 @@ export const getOrders = async (
         where,
         include: {
           store: { select: { name: true } },
-          items: { include: { product: { select: { name: true, images: { take: 1 } } } } },
+          items: {
+            include: {
+              product: { select: { name: true, images: { take: 1 } } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -223,19 +240,24 @@ export const getOrders = async (
 export const getOrderDetails = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const user = (req as any).user;
     const { id } = req.params;
 
     const where: any = { id };
-    
+
     if (user.role === "USER") {
       where.userId = user.id;
     } else if (user.role === "STORE_ADMIN") {
       if (!user.managedStoreId) {
-        return sendResponse(res, 403, false, "You are not assigned to any store");
+        return sendResponse(
+          res,
+          403,
+          false,
+          "You are not assigned to any store",
+        );
       }
       where.storeId = user.managedStoreId;
     }
@@ -267,7 +289,13 @@ export const getOrderDetails = async (
             items: { include: { product: { include: { images: true } } } },
           },
         });
-        return sendResponse(res, 200, true, "Order details retrieved (Auto-confirmed)", updatedOrder);
+        return sendResponse(
+          res,
+          200,
+          true,
+          "Order details retrieved (Auto-confirmed)",
+          updatedOrder,
+        );
       }
     }
 
@@ -280,7 +308,12 @@ export const getOrderDetails = async (
 /**
  * Haversine formula to calculate distance between two coordinates in km
  */
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -301,7 +334,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export const uploadPaymentProof = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -309,7 +342,12 @@ export const uploadPaymentProof = async (
     const file = req.file;
 
     if (!file) {
-      return sendResponse(res, 400, false, "File bukti pembayaran wajib diupload");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "File bukti pembayaran wajib diupload",
+      );
     }
 
     // Find the order & verify ownership
@@ -323,7 +361,12 @@ export const uploadPaymentProof = async (
 
     // Check if order is still in WAITING_PAYMENT status
     if (order.status !== "WAITING_PAYMENT") {
-      return sendResponse(res, 400, false, "Pesanan ini sudah tidak menunggu pembayaran");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Pesanan ini sudah tidak menunggu pembayaran",
+      );
     }
 
     // Check 1-hour payment deadline
@@ -340,7 +383,12 @@ export const uploadPaymentProof = async (
           cancelReason: "Batas waktu pembayaran (1 jam) telah habis",
         },
       });
-      return sendResponse(res, 400, false, "Batas waktu pembayaran telah habis. Pesanan dibatalkan otomatis.");
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Batas waktu pembayaran telah habis. Pesanan dibatalkan otomatis.",
+      );
     }
 
     // With CloudinaryStorage, the file is already uploaded
@@ -362,7 +410,13 @@ export const uploadPaymentProof = async (
       },
     });
 
-    sendResponse(res, 200, true, "Bukti pembayaran berhasil diupload", updatedOrder);
+    sendResponse(
+      res,
+      200,
+      true,
+      "Bukti pembayaran berhasil diupload",
+      updatedOrder,
+    );
   } catch (error) {
     next(error);
   }
@@ -375,7 +429,7 @@ export const uploadPaymentProof = async (
 export const cancelExpiredOrders = async (
   _req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -393,7 +447,12 @@ export const cancelExpiredOrders = async (
       },
     });
 
-    sendResponse(res, 200, true, `${result.count} pesanan expired telah dibatalkan`);
+    sendResponse(
+      res,
+      200,
+      true,
+      `${result.count} pesanan expired telah dibatalkan`,
+    );
   } catch (error) {
     next(error);
   }
@@ -406,7 +465,7 @@ export const cancelExpiredOrders = async (
 export const cancelOrder = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -449,7 +508,7 @@ export const cancelOrder = async (
 export const confirmOrderReceipt = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -465,7 +524,12 @@ export const confirmOrderReceipt = async (
     }
 
     if (order.status !== "SENT") {
-      sendResponse(res, 400, false, "Pesanan belum dikirim atau sudah dikonfirmasi");
+      sendResponse(
+        res,
+        400,
+        false,
+        "Pesanan belum dikirim atau sudah dikonfirmasi",
+      );
       return;
     }
 
@@ -477,7 +541,13 @@ export const confirmOrderReceipt = async (
       },
     });
 
-    sendResponse(res, 200, true, "Pesanan telah dikonfirmasi diterima", updatedOrder);
+    sendResponse(
+      res,
+      200,
+      true,
+      "Pesanan telah dikonfirmasi diterima",
+      updatedOrder,
+    );
   } catch (error) {
     next(error);
   }
@@ -489,7 +559,7 @@ export const confirmOrderReceipt = async (
 export const autoConfirmShippedOrders = async (
   _req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const sevenDaysAgo = new Date(Date.now() - 168 * 60 * 60 * 1000);
@@ -505,7 +575,12 @@ export const autoConfirmShippedOrders = async (
       },
     });
 
-    sendResponse(res, 200, true, `${result.count} pesanan telah dikonfirmasi otomatis`);
+    sendResponse(
+      res,
+      200,
+      true,
+      `${result.count} pesanan telah dikonfirmasi otomatis`,
+    );
   } catch (error) {
     next(error);
   }

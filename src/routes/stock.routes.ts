@@ -3,7 +3,10 @@ import * as stockController from "../controllers/stock.controller";
 import * as stockJournalController from "../controllers/stock-journal.controller";
 import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 import { validateRequest } from "../middlewares/validation.middleware";
-import { updateStockSchema, transferStockSchema } from "../validations/stock.validation";
+import {
+  updateStockSchema,
+  transferStockSchema,
+} from "../validations/stock.validation";
 
 const router = Router();
 

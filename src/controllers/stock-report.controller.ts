@@ -4,7 +4,7 @@ import * as stockReportService from "../services/stock-report.service";
 export const getStockReport = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Validate user authentication
@@ -34,7 +34,7 @@ export const getStockReport = async (
       monthNum,
       yearNum,
       pageNum,
-      limitNum
+      limitNum,
     );
 
     // Return success response

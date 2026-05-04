@@ -3,7 +3,10 @@ import { Request, Response, NextFunction } from "express";
 import config from "../config/env";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
-import { sendVerificationEmail, sendResetPasswordEmail } from "../services/mailer.service";
+import {
+  sendVerificationEmail,
+  sendResetPasswordEmail,
+} from "../services/mailer.service";
 import prisma from "../config/database";
 import { sendResponse } from "../utils/response.util";
 import {
@@ -25,7 +28,11 @@ import { issueReferralVouchers } from "../services/voucher.service";
 
 const googleClient = new OAuth2Client(config.google.clientId);
 
-export const signUp = async (req: Request, res: Response, next: NextFunction) => {
+export const signUp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { email, referredBy: referralCode } = req.body;
     let user = await findUserByEmail(email);
@@ -53,7 +60,11 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const signIn = async (req: Request, res: Response, next: NextFunction) => {
+export const signIn = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { email, password } = req.body;
     const user = await findUserByEmail(email);
@@ -63,7 +74,12 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     if (!user.password) {
-      return sendResponse(res, 401, false, "Silakan gunakan login dengan Google");
+      return sendResponse(
+        res,
+        401,
+        false,
+        "Silakan gunakan login dengan Google",
+      );
     }
 
     const isMatch = await verifyPassword(password, user.password);
@@ -72,11 +88,16 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     if (!user.isVerified) {
-      return sendResponse(res, 403, false, "Mohon verifikasi email Anda terlebih dahulu");
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Mohon verifikasi email Anda terlebih dahulu",
+      );
     }
 
     const token = generateAuthToken(user.id, user.role);
-    
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -100,16 +121,20 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
         phone: user.phone,
         profilePicture: user.photo,
         referralCode: user.referralCode,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
       },
-      token
+      token,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getMe = async (req: Request, res: Response, next: NextFunction) => {
+export const getMe = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const user = (req as any).user;
     const formattedUser = {
@@ -118,29 +143,46 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
     };
     delete formattedUser.photo;
 
-    return sendResponse(res, 200, true, "User profile fetched", { 
+    return sendResponse(res, 200, true, "User profile fetched", {
       user: {
         ...formattedUser,
-        isVerified: user.isVerified
-      } 
+        isVerified: user.isVerified,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const logout = async (_req: Request, res: Response, next: NextFunction) => {
+export const logout = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    res.clearCookie("token", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
-    res.clearCookie("access_token", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
-    res.clearCookie("role", { sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
+    res.clearCookie("token", {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    res.clearCookie("access_token", {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    res.clearCookie("role", {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
     return sendResponse(res, 200, true, "Logged out successfully");
   } catch (error) {
     next(error);
   }
 };
 
-export const verifyHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { email, token, password } = req.body;
     const user = await findUserByEmail(email);
@@ -167,7 +209,11 @@ export const verifyHandler = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const forgotPasswordHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const forgotPasswordHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const user = await findUserByEmail(req.body.email);
     if (!user) return sendResponse(res, 404, false, "User not found");
@@ -182,7 +228,11 @@ export const forgotPasswordHandler = async (req: Request, res: Response, next: N
   }
 };
 
-export const resetPasswordHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const resetPasswordHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { email, token, password } = req.body;
     const user = await findUserByEmail(email);
@@ -200,7 +250,11 @@ export const resetPasswordHandler = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
+export const googleLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { credential } = req.body;
     const ticket = await googleClient.verifyIdToken({
@@ -249,7 +303,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
       // If user exists but is not verified, verify them since they logged in via Google
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { isVerified: true }
+        data: { isVerified: true },
       });
     }
 
@@ -278,9 +332,9 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
         role: user.role,
         referralCode: user.referralCode,
         profilePicture: user.photo,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
       },
-      token
+      token,
     });
   } catch (error) {
     next(error);

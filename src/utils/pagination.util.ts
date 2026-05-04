@@ -6,7 +6,7 @@ import { PaginationMeta } from "../types/product.types";
 export const formatPaginationMeta = (
   total: number,
   page: number,
-  limit: number
+  limit: number,
 ): PaginationMeta => {
   return {
     total,

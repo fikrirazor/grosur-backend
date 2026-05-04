@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getShippingCosts, getProvinces, getCities } from "../controllers/shipping.controller";
+import {
+  getShippingCosts,
+  getProvinces,
+  getCities,
+} from "../controllers/shipping.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();

@@ -49,7 +49,12 @@ const calculateNominal = (discount: any) => {
 /**
  * Calculate discount for single product based on active discounts
  */
-const calculateProductDiscount = async (productId: string, quantity: number, price: number, storeId: string) => {
+const calculateProductDiscount = async (
+  productId: string,
+  quantity: number,
+  price: number,
+  storeId: string,
+) => {
   // Find active discount for this product
   const now = new Date();
   const discount = await prisma.discount.findFirst({
@@ -80,7 +85,11 @@ const calculateProductDiscount = async (productId: string, quantity: number, pri
 /**
  * Validate and calculate voucher discount
  */
-const calculateVoucherDiscount = async (voucherCode: string | undefined, userId: string, subtotal: number) => {
+const calculateVoucherDiscount = async (
+  voucherCode: string | undefined,
+  userId: string,
+  subtotal: number,
+) => {
   if (!voucherCode) return 0;
 
   const voucher = await prisma.voucher.findUnique({
@@ -92,11 +101,21 @@ const calculateVoucherDiscount = async (voucherCode: string | undefined, userId:
   }
 
   if (voucher.userId !== userId) {
-    throw new AppError(403, "Voucher not owned by user", true, "VOUCHER_NOT_OWNED");
+    throw new AppError(
+      403,
+      "Voucher not owned by user",
+      true,
+      "VOUCHER_NOT_OWNED",
+    );
   }
 
   if (voucher.isUsed || voucher.qty <= 0) {
-    throw new AppError(400, "Voucher already used or exhausted", true, "VOUCHER_UNAVAILABLE");
+    throw new AppError(
+      400,
+      "Voucher already used or exhausted",
+      true,
+      "VOUCHER_UNAVAILABLE",
+    );
   }
 
   const now = new Date();
@@ -109,7 +128,7 @@ const calculateVoucherDiscount = async (voucherCode: string | undefined, userId:
       400,
       `Minimum spend required: Rp ${Number(voucher.minSpend).toLocaleString("id-ID")}`,
       true,
-      "MIN_SPEND_NOT_MET"
+      "MIN_SPEND_NOT_MET",
     );
   }
 
@@ -148,7 +167,12 @@ export const previewCheckout = async (data: CheckoutPreviewInput) => {
   // Calculate each item
   for (const item of items) {
     const itemSubtotal = item.quantity * item.price;
-    const itemDiscount = await calculateProductDiscount(item.productId, item.quantity, item.price, storeId);
+    const itemDiscount = await calculateProductDiscount(
+      item.productId,
+      item.quantity,
+      item.price,
+      storeId,
+    );
 
     subtotal += itemSubtotal;
     productDiscountTotal += itemDiscount;
@@ -165,10 +189,17 @@ export const previewCheckout = async (data: CheckoutPreviewInput) => {
 
   // Calculate voucher discount (applied to subtotal after product discounts)
   const subtotalAfterProductDiscount = subtotal - productDiscountTotal;
-  const voucherDiscount = await calculateVoucherDiscount(voucherCode, userId, subtotalAfterProductDiscount);
+  const voucherDiscount = await calculateVoucherDiscount(
+    voucherCode,
+    userId,
+    subtotalAfterProductDiscount,
+  );
 
   // Calculate shipping
-  const baseShippingCost = data.shippingCost !== undefined ? data.shippingCost : calculateShipping(storeId);
+  const baseShippingCost =
+    data.shippingCost !== undefined
+      ? data.shippingCost
+      : calculateShipping(storeId);
 
   // Apply shipping voucher if applicable
   let finalShippingCost = baseShippingCost;
@@ -183,7 +214,8 @@ export const previewCheckout = async (data: CheckoutPreviewInput) => {
   }
 
   // Calculate final amount
-  const finalAmount = subtotalAfterProductDiscount - voucherDiscount + finalShippingCost;
+  const finalAmount =
+    subtotalAfterProductDiscount - voucherDiscount + finalShippingCost;
 
   return {
     success: true,

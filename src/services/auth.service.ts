@@ -28,14 +28,12 @@ export const findUserByEmail = async (email: string) => {
   });
 };
 
-
 export const findUserByReferralCode = async (referralCode: string) => {
   if (!referralCode) return null;
   return await prisma.user.findUnique({
     where: { referralCode },
   });
 };
-
 
 export const verifyPassword = async (plain: string, hashed: string) => {
   return await comparePassword(plain, hashed);
@@ -57,7 +55,11 @@ export const loginUser = async (data: any) => {
   return formatAuthResponse(user);
 };
 
-export const createUserAccount = async (name: string, email: string, pass: string) => {
+export const createUserAccount = async (
+  name: string,
+  email: string,
+  pass: string,
+) => {
   const hashedPassword = await hashPassword(pass);
   const referralCode = await generateFriendlyReferralCode(name || email);
   return await prisma.user.create({
@@ -91,10 +93,15 @@ export const formatAuthResponse = (user: any) => {
 // --- Referral & Verification Functions (from feat/referral-code) ---
 
 export const generateAuthToken = (userId: string, role: string) => {
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, { expiresIn: "1d" });
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, {
+    expiresIn: "1d",
+  });
 };
 
-export const createUnverifiedUser = async (email: string, referredBy?: string) => {
+export const createUnverifiedUser = async (
+  email: string,
+  referredBy?: string,
+) => {
   const referralCode = await generateFriendlyReferralCode(email);
   return await prisma.user.create({
     data: {
@@ -104,7 +111,7 @@ export const createUnverifiedUser = async (email: string, referredBy?: string) =
       referredBy: referredBy || null,
       referralCode,
     },
-    include: { managedStore: true }
+    include: { managedStore: true },
   });
 };
 
@@ -133,7 +140,12 @@ export const validateVerificationToken = async (
 ) => {
   // Find by exact SHA-256 hash — no bcrypt ambiguity
   const dbToken = await prisma.verificationToken.findFirst({
-    where: { userId, type: "EMAIL_VERIFY", isUsed: false, token: sha256(rawToken) },
+    where: {
+      userId,
+      type: "EMAIL_VERIFY",
+      isUsed: false,
+      token: sha256(rawToken),
+    },
   });
   if (!dbToken || dbToken.expiresAt < new Date()) return null;
   return dbToken;
@@ -169,7 +181,12 @@ export const createResetToken = async (userId: string, token: string) => {
 
 export const validateResetToken = async (userId: string, rawToken: string) => {
   const dbToken = await prisma.verificationToken.findFirst({
-    where: { userId, type: "RESET_PASSWORD", isUsed: false, token: sha256(rawToken) },
+    where: {
+      userId,
+      type: "RESET_PASSWORD",
+      isUsed: false,
+      token: sha256(rawToken),
+    },
   });
   if (!dbToken || dbToken.expiresAt < new Date()) return null;
   return dbToken;

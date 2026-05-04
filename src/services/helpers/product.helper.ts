@@ -1,17 +1,23 @@
 import prisma from "../../config/database";
 import { AppError } from "../../middlewares/error.middleware";
-import { 
-  DiscountInfo, 
-  ProductListItem, 
-  ProductDetailItem 
+import {
+  DiscountInfo,
+  ProductListItem,
+  ProductDetailItem,
 } from "../../types/product.types";
 
 /**
  * Unified lookup for product by ID or Slug with optional store filter.
  */
-export const findProductOrThrow = async (identifier: string, storeId?: string) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
-  
+export const findProductOrThrow = async (
+  identifier: string,
+  storeId?: string,
+) => {
+  const isUUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      identifier,
+    );
+
   const product = await prisma.product.findFirst({
     where: {
       ...(isUUID ? { id: identifier } : { slug: identifier }),
@@ -25,7 +31,9 @@ export const findProductOrThrow = async (identifier: string, storeId?: string) =
   });
 
   if (!product || (storeId && product.stocks.length === 0)) {
-    const message = storeId ? "Product not found in this store" : "Product not found";
+    const message = storeId
+      ? "Product not found in this store"
+      : "Product not found";
     throw new AppError(404, message, true, "PRODUCT_NOT_FOUND");
   }
 
@@ -104,10 +112,20 @@ export const findNearestStore = async (userLat: number, userLong: number) => {
   if (stores.length === 0) return null;
 
   let nearest = stores[0];
-  let minDist = calculateDistance(userLat, userLong, stores[0].latitude, stores[0].longitude);
+  let minDist = calculateDistance(
+    userLat,
+    userLong,
+    stores[0].latitude,
+    stores[0].longitude,
+  );
 
   for (const store of stores.slice(1)) {
-    const dist = calculateDistance(userLat, userLong, store.latitude, store.longitude);
+    const dist = calculateDistance(
+      userLat,
+      userLong,
+      store.latitude,
+      store.longitude,
+    );
     if (dist < minDist) {
       minDist = dist;
       nearest = store;
@@ -120,7 +138,12 @@ export const findNearestStore = async (userLat: number, userLong: number) => {
 /**
  * Calculate distance between two coordinates (Haversine formula)
  */
-export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+export const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+) => {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -140,7 +163,7 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
 export const resolveTargetStoreId = async (
   storeId?: string,
   userLat?: number,
-  userLong?: number
+  userLong?: number,
 ): Promise<string> => {
   if (storeId) return storeId;
 
@@ -152,7 +175,12 @@ export const resolveTargetStoreId = async (
     return nearestStore.id;
   }
 
-  throw new AppError(400, "Either storeId or user location is required", true, "MISSING_PARAMS");
+  throw new AppError(
+    400,
+    "Either storeId or user location is required",
+    true,
+    "MISSING_PARAMS",
+  );
 };
 
 /**
@@ -189,7 +217,7 @@ export const buildProductWhereClause = (filters: {
   categoryId?: string;
 }) => {
   const { storeId, search, categoryId } = filters;
-  
+
   const where: any = {
     storeId,
     product: {
@@ -210,4 +238,3 @@ export const buildProductWhereClause = (filters: {
 
   return where;
 };
-
