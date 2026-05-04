@@ -1,6 +1,8 @@
-// ─── Query & Input ────────────────────────────────────────────────────────────
+// =============================================================================
+// PRODUCT QUERY & INPUT TYPES (Request dari Client)
+// =============================================================================
 
-// untuk filter product by store
+// Parameter untuk filter list produk publik (berdasarkan toko, search, kategori)
 export interface ProductQuery {
   storeId: string;
   search?: string;
@@ -9,7 +11,7 @@ export interface ProductQuery {
   limit: number;
 }
 
-// untuk tambah produk baru
+// Input untuk membuat produk baru (Admin)
 export interface CreateProductInput {
   name: string;
   description?: string;
@@ -18,7 +20,7 @@ export interface CreateProductInput {
   storeId: string;
 }
 
-// untuk update produk
+// Input untuk memperbarui data produk (Admin)
 export interface UpdateProductInput {
   name?: string;
   description?: string;
@@ -27,8 +29,11 @@ export interface UpdateProductInput {
   isActive?: boolean;
 }
 
-// ─── Return Shapes ────────────────────────────────────────────────────────────
+// =============================================================================
+// PRODUCT RETURN SHAPES (Response ke Client)
+// =============================================================================
 
+// Informasi diskon yang sedang aktif untuk produk tersebut
 export interface DiscountInfo {
   type: string;
   value: number;
@@ -38,12 +43,13 @@ export interface DiscountInfo {
   freeQty: number | null;
 }
 
+// Informasi stok produk di toko tertentu
 export interface InventoryInfo {
   quantity: number;
   storeId: string;
 }
 
-// Shape item di list produk publik
+// Struktur data produk untuk tampilan LIST (Katalog)
 export interface ProductListItem {
   id: string;
   name: string;
@@ -52,12 +58,12 @@ export interface ProductListItem {
   description: string | null;
   category: string;
   categoryId: string;
-  image: string | null;
+  image: string | null; // Thumbnail utama
   discount: DiscountInfo | null;
   inventory: InventoryInfo;
 }
 
-// Shape detail produk publik (includes all images)
+// Struktur data produk untuk tampilan DETAIL (Halaman Produk)
 export interface ProductDetailItem {
   id: string;
   name: string;
@@ -66,16 +72,20 @@ export interface ProductDetailItem {
   price: number;
   category: string;
   categoryId: string;
-  images: { id: string; url: string }[];
+  images: { id: string; url: string }[]; // Semua foto produk
   discount: DiscountInfo | null;
   inventory: InventoryInfo;
 }
 
-// Pagination meta
+// =============================================================================
+// SHARED TYPES
+// =============================================================================
+
+// Metadata standar untuk semua fitur yang menggunakan pagination
 export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPage: number;
-  hasMore: boolean;
+  total: number;     // Total record keseluruhan
+  page: number;      // Halaman saat ini
+  limit: number;     // Jumlah data per halaman
+  totalPage: number; // Total jumlah halaman
+  hasMore: boolean;  // Apakah masih ada halaman selanjutnya?
 }
