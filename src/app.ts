@@ -20,10 +20,14 @@ app.use(
       if (process.env.CORS_ORIGIN) {
         allowedOrigins.push(...process.env.CORS_ORIGIN.split(","));
       }
+      
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
+      } else if (origin.endsWith(".vercel.app")) {
+        // Allow all Vercel preview deployments
+        callback(null, true);
       } else {
-        callback(null, false);
+        callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
