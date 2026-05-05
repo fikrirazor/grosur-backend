@@ -59,6 +59,7 @@ const handlePrismaError = (err: any, res: Response) => {
   const codes: Record<string, { status: number; msg: string }> = {
     P2002: { status: 409, msg: "Data sudah ada (duplikat)." },
     P2003: { status: 400, msg: "Gagal menghapus data karena masih terhubung dengan data lain (misal: stok, pesanan)." },
+    P2023: { status: 400, msg: "Format ID atau data tidak valid." },
     P2025: { status: 404, msg: "Data tidak ditemukan." },
   };
   const { status = 500, msg = "Database error" } = codes[err.code] || {};
