@@ -203,8 +203,21 @@ export const deleteStore = async (
   next: NextFunction,
 ) => {
   try {
-    await prisma.store.delete({ where: { id: req.params.id } });
-    return sendResponse(res, 200, true, "Cabang berhasil dihapus");
+    const storeId = req.params.id;
+    
+    // Gunakan transaction untuk melakukan soft delete dan melepas admin yang ditugaskan
+    await prisma.$transaction([
+      prisma.store.update({
+        where: { id: storeId },
+        data: { isActive: false },
+      }),
+      prisma.user.updateMany({
+        where: { managedStoreId: storeId },
+        data: { managedStoreId: null, role: "USER" },
+      }),
+    ]);
+
+    return sendResponse(res, 200, true, "Cabang berhasil dinonaktifkan (Soft Delete)");
   } catch (error) {
     next(error);
   }
