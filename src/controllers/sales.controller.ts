@@ -6,7 +6,7 @@ import prisma from "../config/database";
 export const getSalesReport = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -29,7 +29,7 @@ export const getSalesReport = async (
       month ? parseInt(month as string) : undefined,
       year ? parseInt(year as string) : undefined,
       page ? parseInt(page as string) : 1,
-      limit ? parseInt(limit as string) : 10
+      limit ? parseInt(limit as string) : 10,
     );
 
     res.status(200).json(report);
@@ -41,7 +41,7 @@ export const getSalesReport = async (
 export const exportSalesReport = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -62,13 +62,13 @@ export const exportSalesReport = async (
       role,
       storeId as string | undefined,
       month ? parseInt(month as string) : undefined,
-      year ? parseInt(year as string) : undefined
+      year ? parseInt(year as string) : undefined,
     );
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=sales-report-${year}-${month || "all"}.csv`
+      `attachment; filename=sales-report-${year}-${month || "all"}.csv`,
     );
     res.status(200).send(csvContent);
   } catch (error) {
@@ -79,14 +79,16 @@ export const exportSalesReport = async (
 export const getStockSummary = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role;
 
     if (!userId || !role) {
-      res.status(401).json({ success: false, message: "Authentication required" });
+      res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
       return;
     }
 
@@ -97,7 +99,7 @@ export const getStockSummary = async (
       role,
       storeId as string | undefined,
       month ? parseInt(month as string) : undefined,
-      year ? parseInt(year as string) : undefined
+      year ? parseInt(year as string) : undefined,
     );
 
     res.status(200).json(report);
@@ -109,14 +111,16 @@ export const getStockSummary = async (
 export const getStockDetail = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { productId, storeId, startDate, endDate, page, limit } = req.query;
     const { userId, role } = req.user as any;
 
     if (!productId) {
-      res.status(400).json({ success: false, message: "Product ID is required" });
+      res
+        .status(400)
+        .json({ success: false, message: "Product ID is required" });
       return;
     }
 
@@ -125,10 +129,12 @@ export const getStockDetail = async (
     if (role === "STORE_ADMIN") {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { managedStoreId: true }
+        select: { managedStoreId: true },
       });
       if (!user?.managedStoreId) {
-        res.status(403).json({ success: false, message: "Admin has no managed store" });
+        res
+          .status(403)
+          .json({ success: false, message: "Admin has no managed store" });
         return;
       }
       targetStoreId = user.managedStoreId;
@@ -150,7 +156,7 @@ export const getStockDetail = async (
       startDate ? new Date(startDate as string) : undefined,
       end,
       page ? parseInt(page as string) : 1,
-      limit ? parseInt(limit as string) : 20
+      limit ? parseInt(limit as string) : 20,
     );
 
     res.status(200).json(detail);

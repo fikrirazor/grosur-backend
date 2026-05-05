@@ -22,12 +22,21 @@ const storage = new CloudinaryStorage({
 } as any); // The options object itself needs to be cast if types don't match perfectly, but internally it's better.
 
 const fileFilter = (_req: any, file: any, cb: any) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/gif",
+    "image/webp",
+  ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
-      new AppError(400, "Only .jpg, .jpeg, .png, .gif and .webp formats are allowed!"),
+      new AppError(
+        400,
+        "Only .jpg, .jpeg, .png, .gif and .webp formats are allowed!",
+      ),
       false,
     );
   }

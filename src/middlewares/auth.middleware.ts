@@ -27,7 +27,10 @@ export const verifyToken = async (
         "UNAUTHORIZED",
       );
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+    ) as JwtPayload;
     const user = await fetchAuthUser(decoded.id);
 
     if (!user)
@@ -96,4 +99,5 @@ export const requireRole = (allowedRoles: Role[]) => {
   };
 };
 
-export const authorizeRoles = (...roles: string[]) => requireRole(roles as Role[]);
+export const authorizeRoles = (...roles: string[]) =>
+  requireRole(roles as Role[]);

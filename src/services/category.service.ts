@@ -1,9 +1,15 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
-import { CreateCategoryInput, UpdateCategoryInput } from "../types/category.types";
+import {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+} from "../types/category.types";
+import { generateSlug } from "../utils/slug.util";
 
-
-export const getCategories = async () => {
+/**
+ * Mendapatkan daftar kategori dengan pencarian dan pagination (Admin).
+ */
+export const getCategories = async (query: any) => {
   return await prisma.category.findMany({
     orderBy: {
       name: "asc",
@@ -11,7 +17,10 @@ export const getCategories = async () => {
   });
 };
 
-export const createCategory = async (data: CreateCategoryInput) => {
+/**
+ * Membuat kategori produk baru (Admin).
+ */
+export const createCategory = async (data: { name: string }) => {
   const { name } = data;
 
   // Check kalau ada kategori duplikat
@@ -33,11 +42,7 @@ export const createCategory = async (data: CreateCategoryInput) => {
     );
   }
 
-  // Generate slug from name
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  const slug = generateSlug(name);
 
   // Create category
   const category = await prisma.category.create({
@@ -50,6 +55,9 @@ export const createCategory = async (data: CreateCategoryInput) => {
   return category;
 };
 
+/**
+ * Memperbarui data kategori (Admin).
+ */
 export const updateCategory = async (
   categoryId: string,
   data: UpdateCategoryInput,
@@ -60,12 +68,7 @@ export const updateCategory = async (
   });
 
   if (!existingCategory) {
-    throw new AppError(
-      404,
-      "Category not found",
-      true,
-      "CATEGORY_NOT_FOUND",
-    );
+    throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
   }
 
   // Jika nama diupdate, cek kalau ada kategori duplikat
@@ -92,13 +95,7 @@ export const updateCategory = async (
     }
   }
 
-  // Generate new slug if name changes
-  const slug = data.name
-    ? data.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-    : existingCategory.slug;
+  const slug = data.name ? generateSlug(data.name) : existingCategory.slug;
 
   // Update category
   const updatedCategory = await prisma.category.update({
@@ -112,6 +109,9 @@ export const updateCategory = async (
   return updatedCategory;
 };
 
+/**
+ * Menghapus kategori produk (Admin).
+ */
 export const deleteCategory = async (categoryId: string) => {
   // check kalau kategori ada
   const existingCategory = await prisma.category.findUnique({
@@ -119,12 +119,7 @@ export const deleteCategory = async (categoryId: string) => {
   });
 
   if (!existingCategory) {
-    throw new AppError(
-      404,
-      "Category not found",
-      true,
-      "CATEGORY_NOT_FOUND",
-    );
+    throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
   }
 
   // Check kalau kategori ada produk

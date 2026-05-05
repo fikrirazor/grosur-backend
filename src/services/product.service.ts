@@ -1,227 +1,107 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
-
-import { ProductQuery, CreateProductInput, UpdateProductInput } from "../types/product.types";
+import {
+  ProductQuery,
+  CreateProductInput,
+  UpdateProductInput,
+  ProductListItem,
+  ProductDetailItem,
+  PaginationMeta,
+} from "../types/product.types";
 import { generateSlug } from "../utils/slug.util";
+import { formatPaginationMeta } from "../utils/pagination.util";
+import {
+  findProductOrThrow,
+  mapToProductListItem,
+  mapToProductDetailItem,
+  resolveTargetStoreId,
+  getPublicProductInclude,
+  buildProductWhereClause,
+} from "./helpers/product.helper";
 
-export const getPublicProducts = async (query: ProductQuery) => {
+/**
+ * Mendapatkan daftar produk untuk publik (Catalog) dengan filter dan pagination.
+ */
+export const getPublicProducts = async (
+  query: ProductQuery,
+): Promise<{ items: ProductListItem[]; meta: PaginationMeta }> => {
   const { storeId, search, categoryId, page, limit } = query;
-  const skip = (page - 1) * limit;
   const now = new Date();
 
-  const where: any = {
-    storeId,
-    product: {
-      isActive: true,
-    },
-  };
-
-  if (search) {
-    where.product.name = {
-      contains: search,
-      mode: "insensitive",
-    };
-  }
-
-  if (categoryId) {
-    where.product.categoryId = categoryId;
-  }
+  const where = buildProductWhereClause({ storeId, search, categoryId });
 
   const [items, total] = await Promise.all([
     prisma.stock.findMany({
       where,
-      include: {
-        product: {
-          include: {
-            category: true,
-            images: {
-              take: 1,
-            },
-            discounts: {
-              where: {
-                isActive: true,
-                startDate: { lte: now },
-                endDate: { gte: now },
-              },
-              orderBy: {
-                createdAt: "desc",
-              },
-              take: 1,
-            },
-          },
-        },
-      },
-      skip,
+      include: getPublicProductInclude(now),
+      skip: (page - 1) * limit,
       take: limit,
-      orderBy: {
-        product: {
-          name: "asc",
-        },
-      },
+      orderBy: { product: { name: "asc" } },
     }),
     prisma.stock.count({ where }),
   ]);
 
   return {
-    items: items.map((stock) => {
-      const discount = stock.product.discounts[0];
-      return {
-        id: stock.product.id,
-        name: stock.product.name,
-        slug: stock.product.slug,
-        price: stock.product.price,
-        description: stock.product.description,
-        category: stock.product.category.name,
-        categoryId: stock.product.categoryId,
-        image: stock.product.images[0]?.url || null,
-        discount: discount ? {
-          type: discount.type,
-          value: discount.value,
-          minSpend: discount.minSpend,
-          maxDiscount: discount.maxDiscount,
-          buyQty: discount.buyQty,
-          freeQty: discount.freeQty,
-        } : null,
-        inventory: {
-          quantity: stock.quantity,
-          storeId: stock.storeId,
-        },
-      };
-    }),
-    meta: {
-      total,
-      page,
-      limit,
-      totalPage: Math.ceil(total / limit),
-      hasMore: page * limit < total,
-    },
+    items: items.map(mapToProductListItem),
+    meta: formatPaginationMeta(total, page, limit),
   };
 };
 
-export const getPublicProductDetail = async (slug: string, storeId: string) => {
+/**
+ * Mendapatkan detail produk untuk publik berdasarkan slug dan storeId.
+ */
+export const getPublicProductDetail = async (
+  slug: string,
+  storeId: string,
+): Promise<ProductDetailItem | null> => {
   const now = new Date();
   const stock = await prisma.stock.findFirst({
     where: {
       storeId,
-      product: {
-        slug,
-        isActive: true,
-      },
+      product: { slug, isActive: true },
     },
-    include: {
-      product: {
-        include: {
-          category: true,
-          images: true,
-          discounts: {
-            where: {
-              isActive: true,
-              startDate: { lte: now },
-              endDate: { gte: now },
-            },
-            orderBy: {
-              createdAt: "desc",
-            },
-            take: 1,
-          },
-        },
-      },
-    },
+    include: getPublicProductInclude(now),
   });
 
-  if (!stock) {
-    return null;
-  }
-
-  const discount = stock.product.discounts[0];
-
-  return {
-    id: stock.product.id,
-    name: stock.product.name,
-    slug: stock.product.slug,
-    description: stock.product.description,
-    price: stock.product.price,
-    category: stock.product.category.name,
-    categoryId: stock.product.categoryId,
-    images: stock.product.images.map((img) => ({
-      id: img.id,
-      url: img.url,
-    })),
-    discount: discount ? {
-      type: discount.type,
-      value: discount.value,
-      minSpend: discount.minSpend,
-      maxDiscount: discount.maxDiscount,
-      buyQty: discount.buyQty,
-      freeQty: discount.freeQty,
-    } : null,
-    inventory: {
-      quantity: stock.quantity,
-      storeId: stock.storeId,
-    },
-  };
+  return stock ? mapToProductDetailItem(stock) : null;
 };
 
+/**
+ * Mendapatkan daftar semua kategori produk.
+ */
 export const getCategories = async () => {
   return await prisma.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
+    orderBy: { name: "asc" },
   });
 };
 
+/**
+ * Mencari satu produk berdasarkan ID atau Slug.
+ */
 export const getProductById = async (productIdOrSlug: string) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
-  
-  const product = await prisma.product.findFirst({
-    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
-    include: {
-      category: true,
-      images: true,
-      stocks: true,
-    },
-  });
-
-  if (!product) {
-    throw new AppError(404, "Product not found", true, "PRODUCT_NOT_FOUND");
-  }
-
-  return product;
+  return await findProductOrThrow(productIdOrSlug);
 };
 
+/**
+ * Membuat produk baru dan menginisialisasi stok di toko (Admin).
+ */
 export const createProduct = async (data: CreateProductInput) => {
   const { name, description, price, categoryId, storeId } = data;
 
-  // Validasi apakah storenya ada?
-  const store = await prisma.store.findUnique({
-    where: { id: storeId },
-  });
+  const [store, category] = await Promise.all([
+    prisma.store.findUnique({ where: { id: storeId } }),
+    prisma.category.findUnique({ where: { id: categoryId } }),
+  ]);
 
-  if (!store) {
+  if (!store)
     throw new AppError(404, "Store not found", true, "STORE_NOT_FOUND");
-  }
-  
-  // Validasi apakah kategori ada?
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-  });
-
-  if (!category) {
+  if (!category)
     throw new AppError(404, "Category not found", true, "CATEGORY_NOT_FOUND");
-  }
 
-  // Bisnis logic cek duplikasi nama produk di toko yang sama
   const existingProduct = await prisma.product.findFirst({
     where: {
-      name: {
-        equals: name,
-        mode: "insensitive",
-      },
-      stocks: {
-        some: {
-          storeId,
-        },
-      },
+      name: { equals: name, mode: "insensitive" },
+      stocks: { some: { storeId } },
     },
   });
 
@@ -234,89 +114,46 @@ export const createProduct = async (data: CreateProductInput) => {
     );
   }
 
-  // Generate slug from name
-  const slug = generateSlug(name);  
-
-  // Create product with stock entry
-  const product = await prisma.$transaction(async (tx) => {
-    const newProduct = await tx.product.create({
-      data: {
-        name,
-        slug,
-        description,
-        price,
-        categoryId,
-      },
+  return await prisma.$transaction(async (tx) => {
+    const product = await tx.product.create({
+      data: { name, slug: generateSlug(name), description, price, categoryId },
     });
 
     await tx.stock.create({
-      data: {
-        productId: newProduct.id,
-        storeId,
-        quantity: 0,
-      },
+      data: { productId: product.id, storeId, quantity: 0 },
     });
 
     return tx.product.findUnique({
-      where: { id: newProduct.id },
+      where: { id: product.id },
       include: {
         category: true,
         images: true,
-        stocks: {
-          where: { storeId },
-        },
+        stocks: { where: { storeId } },
       },
     });
   });
-
-  return product;
 };
 
+/**
+ * Memperbarui data produk (Admin).
+ */
 export const updateProduct = async (
   productIdOrSlug: string,
   data: UpdateProductInput,
   storeId: string,
 ) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
+  const productRecord = await findProductOrThrow(productIdOrSlug, storeId);
 
-  const productRecord = await prisma.product.findFirst({
-    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
-    include: {
-      stocks: {
-        where: { storeId }
-      }
-    }
-  });
-
-  if (!productRecord || productRecord.stocks.length === 0) {
-    throw new AppError(
-      404,
-      "Product not found in this store",
-      true,
-      "PRODUCT_NOT_FOUND",
-    );
-  }
-
-  // If updating name, check for duplicates
   if (data.name && data.name !== productRecord.name) {
-    const duplicateProduct = await prisma.product.findFirst({
+    const duplicate = await prisma.product.findFirst({
       where: {
-        name: {
-          equals: data.name,
-          mode: "insensitive",
-        },
-        stocks: {
-          some: {
-            storeId,
-          },
-        },
-        id: {
-          not: productRecord.id,
-        },
+        name: { equals: data.name, mode: "insensitive" },
+        stocks: { some: { storeId } },
+        id: { not: productRecord.id },
       },
     });
 
-    if (duplicateProduct) {
+    if (duplicate) {
       throw new AppError(
         409,
         `Product "${data.name}" already exists in this store`,
@@ -326,200 +163,74 @@ export const updateProduct = async (
     }
   }
 
-  // Generate new slug if name is updated
-  let newSlug;
-  if (data.name && data.name !== productRecord.name) {
-    newSlug = generateSlug(data.name);
-  }
-
-  // Update product
-  const updatedProduct = await prisma.product.update({
+  return await prisma.product.update({
     where: { id: productRecord.id },
     data: {
-      name: data.name,
-      slug: newSlug,
-      description: data.description,
-      price: data.price,
-      categoryId: data.categoryId,
-      isActive: data.isActive,
+      ...data,
+      slug: data.name ? generateSlug(data.name) : undefined,
     },
     include: {
       category: true,
       images: true,
-      stocks: {
-        where: { storeId },
-      },
+      stocks: { where: { storeId } },
     },
   });
-
-  return updatedProduct;
 };
 
-export const deleteProduct = async (productIdOrSlug: string, storeId: string) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
-
-  const productRecord = await prisma.product.findFirst({
-    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
-    include: {
-      stocks: {
-        where: { storeId }
-      }
-    }
-  });
-
-  if (!productRecord || productRecord.stocks.length === 0) {
-    throw new AppError(
-      404,
-      "Product not found in this store",
-      true,
-      "PRODUCT_NOT_FOUND",
-    );
-  }
-
-  // Soft delete to avoid breaking Order history
+/**
+ * Menghapus produk (Soft Delete dengan mengubah isActive).
+ */
+export const deleteProduct = async (
+  productIdOrSlug: string,
+  storeId: string,
+) => {
+  const product = await findProductOrThrow(productIdOrSlug, storeId);
   await prisma.product.update({
-    where: { id: productRecord.id },
+    where: { id: product.id },
     data: { isActive: false },
   });
-
   return { success: true, message: "Product deleted successfully" };
 };
 
+/**
+ * Mengunggah banyak foto untuk satu produk.
+ */
 export const uploadProductImages = async (
   productIdOrSlug: string,
   storeId: string,
   files: Express.Multer.File[],
 ) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productIdOrSlug);
-
-  const productRecord = await prisma.product.findFirst({
-    where: isUUID ? { id: productIdOrSlug } : { slug: productIdOrSlug },
-    include: {
-      images: true,
-      stocks: {
-        where: { storeId }
-      }
-    }
-  });
-
-  if (!productRecord || productRecord.stocks.length === 0) {
-    throw new AppError(
-      404,
-      "Product not found in this store",
-      true,
-      "PRODUCT_NOT_FOUND",
-    );
-  }
-
-  // With CloudinaryStorage, files already contain the URLs in the path property
+  const product = await findProductOrThrow(productIdOrSlug, storeId);
   const uploadedUrls = files.map((file: any) => file.path);
 
   const images = await prisma.$transaction(
     uploadedUrls.map((url) =>
       prisma.productImage.create({
-        data: { url, productId: productRecord.id },
+        data: { url, productId: product.id },
       }),
     ),
   );
 
-  return {
-    message: `${images.length} image(s) uploaded successfully`,
-    images,
-  };
+  return { message: `${images.length} image(s) uploaded successfully`, images };
 };
 
 /**
- * Find nearest store by user location
+ * Mendapatkan detail produk dengan informasi stok dan toko terdekat.
  */
-const findNearestStore = async (userLat: number, userLong: number) => {
-  const stores = await prisma.store.findMany({
-    where: { isActive: true },
-    select: { id: true, name: true, latitude: true, longitude: true },
-  });
-
-  if (stores.length === 0) return null;
-
-  let nearest = stores[0];
-  let minDist = calculateDistance(userLat, userLong, stores[0].latitude, stores[0].longitude);
-
-  for (const store of stores.slice(1)) {
-    const dist = calculateDistance(userLat, userLong, store.latitude, store.longitude);
-    if (dist < minDist) {
-      minDist = dist;
-      nearest = store;
-    }
-  }
-
-  return nearest;
-};
-
-/**
- * Calculate distance between two coordinates (Haversine formula)
- */
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-/**
- * Get product with images and stock info
- */
-const getProductWithDetails = async (productId: string, storeId: string) => {
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    include: {
-      images: { orderBy: { createdAt: "asc" } },
-      category: { select: { id: true, name: true } },
-    },
-  });
-
-  if (!product) return null;
-
-  const stock = await prisma.stock.findUnique({
-    where: { productId_storeId: { productId, storeId } },
-    select: { quantity: true },
-  });
-
-  return {
-    ...product,
-    stock: stock?.quantity || 0,
-  };
-};
-
 export const getProductDetail = async (
   productId: string,
   userLat?: number,
   userLong?: number,
-  storeId?: string
+  storeId?: string,
 ) => {
-  let targetStoreId = storeId;
+  const targetStoreId = await resolveTargetStoreId(storeId, userLat, userLong);
+  const product = await findProductOrThrow(productId, targetStoreId);
+  const stock = product.stocks[0];
 
-  if (!targetStoreId && userLat && userLong) {
-    const nearestStore = await findNearestStore(userLat, userLong);
-    if (!nearestStore) {
-      throw new AppError(404, "No active stores found", true, "NO_STORES");
-    }
-    targetStoreId = nearestStore.id;
-  }
-
-  if (!targetStoreId) {
-    throw new AppError(400, "Either storeId or user location is required", true, "MISSING_PARAMS");
-  }
-
-  const product = await getProductWithDetails(productId, targetStoreId);
-
-  if (!product) {
-    throw new AppError(404, "Product not found", true, "PRODUCT_NOT_FOUND");
-  }
-
-  return product;
+  return {
+    ...product,
+    stocks: undefined,
+    stock: stock?.quantity || 0,
+    storeId: targetStoreId,
+  };
 };

@@ -1,25 +1,23 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
+import { formatPaginationMeta } from "../utils/pagination.util";
+import { getMonthRange } from "../utils/date.util";
 
-/**
- * Build date range filter for reports
- */
-const buildDateRange = (month: number, year: number) => {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-  return { startDate, endDate };
-};
 
 /**
  * Get monthly summary of stock changes per product
  * (Total addition, Total reduction, End balance)
+ */
+/**
+ * Mendapatkan laporan ringkasan stok bulanan per produk.
+ * Mencakup stok masuk, keluar, dan saldo akhir.
  */
 export const getStockSummaryReport = async (
   userId: string,
   role: string,
   storeId?: string,
   month: number = new Date().getMonth() + 1,
-  year: number = new Date().getFullYear()
+  year: number = new Date().getFullYear(),
 ) => {
   // Validate role and storeId
   if (role === "STORE_ADMIN") {
@@ -27,13 +25,18 @@ export const getStockSummaryReport = async (
       where: { id: userId },
       select: { managedStoreId: true },
     });
-    if (!admin?.managedStoreId) throw new AppError(403, "Store admin has no assigned store");
+    if (!admin?.managedStoreId)
+      throw new AppError(403, "Store admin has no assigned store");
     storeId = admin.managedStoreId;
   } else if (role !== "SUPER_ADMIN") {
     throw new AppError(403, "Unauthorized access");
   }
 
-  const { startDate, endDate } = buildDateRange(month, year);
+  const { startDate, endDate } = getMonthRange(month, year);
+  if (!startDate || !endDate) {
+    throw new AppError(400, "Invalid month or year provided");
+  }
+
   const now = new Date();
   const isFuture = startDate > now;
   if (isFuture) return { success: true, data: [], period: { month, year } };
@@ -47,9 +50,10 @@ export const getStockSummaryReport = async (
     },
   });
 
-  if (stocks.length === 0) return { success: true, data: [], period: { month, year } };
+  if (stocks.length === 0)
+    return { success: true, data: [], period: { month, year } };
 
-  const stockIds = stocks.map(s => s.id);
+  const stockIds = stocks.map((s) => s.id);
 
   // 2. Fetch ALL journals for these stocks that happened before or during the month
   // This allows us to find the most recent state at the end of the month
@@ -62,18 +66,23 @@ export const getStockSummaryReport = async (
   });
 
   // Group journals by stockId
-  const journalsByStock = allRelevantJournals.reduce((acc: any, j: any) => {
-    if (!acc[j.stockId]) acc[j.stockId] = [];
-    acc[j.stockId].push(j);
-    return acc;
-  }, {} as Record<string, typeof allRelevantJournals>);
+  const journalsByStock = allRelevantJournals.reduce(
+    (acc: any, j: any) => {
+      if (!acc[j.stockId]) acc[j.stockId] = [];
+      acc[j.stockId].push(j);
+      return acc;
+    },
+    {} as Record<string, typeof allRelevantJournals>,
+  );
 
   const reportData = stocks.map((stock: any) => {
     const journals = journalsByStock[stock.id] || [];
-    
+
     // journals are sorted by createdAt DESC
-    const journalsInMonth = journals.filter((j: any) => j.createdAt >= startDate && j.createdAt <= endDate);
-    
+    const journalsInMonth = journals.filter(
+      (j: any) => j.createdAt >= startDate && j.createdAt <= endDate,
+    );
+
     let totalIn = 0;
     let totalOut = 0;
     journalsInMonth.forEach((j: any) => {
@@ -84,19 +93,20 @@ export const getStockSummaryReport = async (
     // The stock at the end of the month is the newQty of the LATEST journal in or before the month.
     // Since journals are sorted by createdAt DESC, the first one in the list (all were <= endDate) is the latest.
     const lastEntry = journals[0];
-    
+
     // If no journals ever existed for this stock before or during this month,
     // and we are looking at a past month, the stock must have been 0.
     // If we are looking at the current month and no journals exist, we fall back to current stock.
-    const isCurrentMonth = now.getMonth() + 1 === month && now.getFullYear() === year;
+    const isCurrentMonth =
+      now.getMonth() + 1 === month && now.getFullYear() === year;
     let endStock = 0;
-    
+
     if (lastEntry) {
       endStock = lastEntry.newQty;
     } else if (isCurrentMonth) {
       endStock = stock.quantity;
     }
-    
+
     const initialStock = endStock - totalIn + totalOut;
 
     return {
@@ -107,7 +117,7 @@ export const getStockSummaryReport = async (
       totalIn,
       totalOut,
       endStock,
-      unit: "pcs", 
+      unit: "pcs",
     };
   });
 
@@ -131,7 +141,7 @@ export const getStockDetailReport = async (
   startDate?: Date,
   endDate?: Date,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
 ) => {
   const skip = (page - 1) * limit;
 
@@ -173,10 +183,12 @@ export const getStockDetailReport = async (
   ]);
 
   // Manually fetch user names (Actor)
-  const userIds = [...new Set(journals.map((j: any) => j.userId).filter(Boolean))];
+  const userIds = [
+    ...new Set(journals.map((j: any) => j.userId).filter(Boolean)),
+  ];
   const users = await prisma.user.findMany({
     where: { id: { in: userIds as string[] } },
-    select: { id: true, name: true }
+    select: { id: true, name: true },
   });
 
   const formattedData = journals.map((j: any) => ({
@@ -187,11 +199,6 @@ export const getStockDetailReport = async (
   return {
     success: true,
     data: formattedData,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    }
+    meta: formatPaginationMeta(total, page, limit),
   };
 };

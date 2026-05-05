@@ -30,9 +30,6 @@ app.use(
   }),
 );
 
-// Security middleware
-app.use(helmet());
-app.use(cookieParser());
 
 // CORS configuration
 app.use(
@@ -40,10 +37,10 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:3000",
-        "https://grosur.vercel.app"
+        "https://grosur.vercel.app",
       ];
       if (process.env.CORS_ORIGIN) {
-        allowedOrigins.push(...process.env.CORS_ORIGIN.split(','));
+        allowedOrigins.push(...process.env.CORS_ORIGIN.split(","));
       }
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -54,6 +51,9 @@ app.use(
     credentials: true,
   }),
 );
+// Security middleware
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cookieParser());
 
 // Body parser middleware
 app.use(express.json());

@@ -12,9 +12,8 @@ const router = Router();
 router.use(verifyToken, authorizeRoles("SUPER_ADMIN"));
 
 /**
- * @route   POST /api/admin/store-admins
- * @desc    Create a new store admin account
- * @access  Private (SUPER_ADMIN)
+ * Menambah akun Store Admin baru (Hanya Super Admin)
+ * POST /api/admin/store-admins
  */
 router.post(
   "/",
@@ -23,16 +22,14 @@ router.post(
 );
 
 /**
- * @route   GET /api/admin/store-admins
- * @desc    Get all store admin accounts with pagination
- * @access  Private (SUPER_ADMIN)
+ * Mendapatkan daftar semua Store Admin (Hanya Super Admin)
+ * GET /api/admin/store-admins?page=1&limit=10
  */
 router.get("/", storeAdminController.getStoreAdmins);
 
 /**
- * @route   PATCH /api/admin/store-admins/:id
- * @desc    Update a store admin account
- * @access  Private (SUPER_ADMIN)
+ * Memperbarui data akun Store Admin (Hanya Super Admin)
+ * PATCH /api/admin/store-admins/:id
  */
 router.patch(
   "/:id",
@@ -41,16 +38,14 @@ router.patch(
 );
 
 /**
- * @route   DELETE /api/admin/store-admins/:id
- * @desc    Delete a store admin account
- * @access  Private (SUPER_ADMIN)
+ * Menghapus akun Store Admin (Hanya Super Admin)
+ * DELETE /api/admin/store-admins/:id
  */
 router.delete("/:id", storeAdminController.deleteStoreAdmin);
 
 /**
- * @route   GET /api/admin/store-admins/list/all
- * @desc    Get all stores (for dropdown/selection)
- * @access  Private (SUPER_ADMIN)
+ * Mendapatkan list semua toko untuk dropdown (Hanya Super Admin)
+ * GET /api/admin/store-admins/list/all
  */
 router.get("/list/all", storeAdminController.getStores);
 

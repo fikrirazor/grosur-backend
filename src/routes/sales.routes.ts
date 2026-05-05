@@ -4,12 +4,13 @@ import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-// Sales report - accessible by SUPER_ADMIN and STORE_ADMIN
+// Laporan Penjualan (Admin & Super Admin)
+// GET /api/sales?storeId=...&month=5&year=2024
 router.get(
   "/",
   verifyToken,
   authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"),
-  salesController.getSalesReport
+  salesController.getSalesReport,
 );
 
 export default router;

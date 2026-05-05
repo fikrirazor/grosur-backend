@@ -2,32 +2,40 @@ import { Router } from "express";
 import * as discountController from "../controllers/discount.controller";
 import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 import { validateRequest } from "../middlewares/validation.middleware";
-import { createDiscountSchema, updateDiscountSchema } from "../validations/discount.validation";
+import {
+  createDiscountSchema,
+  updateDiscountSchema,
+} from "../validations/discount.validation";
 
 const router = Router();
 
-// All routes require authentication and admin role
+// Semua route diskon membutuhkan login dan role Admin
+// Middleware Global untuk grup ini
 router.use(verifyToken);
 router.use(authorizeRoles("SUPER_ADMIN", "STORE_ADMIN"));
 
-// Get all discounts for a store
+// Mendapatkan semua diskon di toko tertentu
+// GET /api/discounts?storeId=...
 router.get("/", discountController.getStoreDiscounts);
 
-// Create new discount
+// Membuat diskon baru
+// POST /api/discounts
 router.post(
   "/",
   validateRequest(createDiscountSchema),
   discountController.createDiscount,
 );
 
-// Update discount
+// Mengubah data diskon
+// PUT /api/discounts/:discountId
 router.put(
   "/:discountId",
   validateRequest(updateDiscountSchema),
   discountController.updateDiscount,
 );
 
-// Delete (deactivate) discount
+// Menghapus (Menonaktifkan) diskon
+// DELETE /api/discounts/:discountId
 router.delete("/:discountId", discountController.deleteDiscount);
 
 export default router;

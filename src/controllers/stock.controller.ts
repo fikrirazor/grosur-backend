@@ -36,12 +36,7 @@ export const updateStock = async (
       // Override storeId dengan store milik admin
       targetStoreId = storeAdmin.managedStoreId;
     } else if (userRole !== "SUPER_ADMIN") {
-      throw new AppError(
-        403,
-        "Insufficient permissions",
-        true,
-        "FORBIDDEN",
-      );
+      throw new AppError(403, "Insufficient permissions", true, "FORBIDDEN");
     }
 
     // SUPER_ADMIN: bisa pilih storeId dari request

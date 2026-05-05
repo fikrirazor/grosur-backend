@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { StockJournalType } from "../generated/prisma";
+import { formatPaginationMeta } from "../utils/pagination.util";
 
 export interface CreateJournalInput {
   stockId: string;
@@ -59,7 +60,11 @@ const buildJournalWhereClause = (filters: GetJournalsInput): any => {
 /**
  * Fetch journals with product & store details
  */
-const fetchJournalsWithDetails = async (where: any, skip: number, limit: number) => {
+const fetchJournalsWithDetails = async (
+  where: any,
+  skip: number,
+  limit: number,
+) => {
   const journals = await prisma.stockJournal.findMany({
     where,
     include: {
@@ -77,7 +82,9 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
   });
 
   // Manually attach user since the relation is missing in prisma schema
-  const userIds = [...new Set(journals.map((j: any) => j.userId).filter(Boolean))];
+  const userIds = [
+    ...new Set(journals.map((j: any) => j.userId).filter(Boolean)),
+  ];
   let users: any[] = [];
   if (userIds.length > 0) {
     users = await prisma.user.findMany({
@@ -88,23 +95,8 @@ const fetchJournalsWithDetails = async (where: any, skip: number, limit: number)
 
   return journals.map((journal: any) => ({
     ...journal,
-    user: users.find(u => u.id === journal.userId) || null,
+    user: users.find((u) => u.id === journal.userId) || null,
   }));
-};
-
-/**
- * Format journal response with pagination metadata
- */
-const formatJournalResponse = (journals: any[], total: number, page: number, limit: number) => {
-  return {
-    journals,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
 };
 
 /**
@@ -132,7 +124,10 @@ export const getStockJournals = async (filters: GetJournalsInput) => {
     prisma.stockJournal.count({ where }),
   ]);
 
-  return formatJournalResponse(journals, total, page, limit);
+  return {
+    journals,
+    meta: formatPaginationMeta(total, page, limit),
+  };
 };
 
 /**

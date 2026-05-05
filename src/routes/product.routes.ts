@@ -10,12 +10,15 @@ import { upload } from "../middlewares/upload.middleware";
 
 const router = Router();
 
-// Publicly available product routes
+// Route untuk publik
+// GET /api/products?storeId=...&search=...&categoryId=...
 router.get("/", productController.getPublicProducts);
+// GET /api/products/categories
 router.get("/categories", productController.getCategories);
+// GET /api/products/:slug_atau_id?storeId=...
 router.get("/:productId", productController.getPublicProductDetail);
 
-// Protected routes for Admins
+// Route khusus Admin (Super Admin & Store Admin)
 router.get(
   "/admin/:productId",
   verifyToken,
@@ -23,7 +26,7 @@ router.get(
   productController.getProductById,
 );
 
-// Protected routes for Super Admins (Store Admins are Read-Only for Products)
+// Route khusus Super Admin (Store Admin Read-Only untuk Produk)
 router.post(
   "/",
   verifyToken,

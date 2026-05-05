@@ -23,7 +23,7 @@ export const adminApiMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = (req as any).user; 
+  const user = (req as any).user;
   const isAllowed = checkRole(user?.role, ["SUPER_ADMIN", "STORE_ADMIN"]);
 
   if (!isAllowed) {
@@ -38,5 +38,5 @@ export const adminApiMiddleware = (
       "FORBIDDEN",
     );
   }
-  next(); 
+  next();
 };

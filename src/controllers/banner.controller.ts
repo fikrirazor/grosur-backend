@@ -17,15 +17,26 @@ export const getBanners = async (_req: Request, res: Response) => {
 
 export const createBanner = async (req: Request, res: Response) => {
   try {
-    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, showText } = req.body;
-    
+    const {
+      title,
+      subtitle,
+      bgGradient,
+      contentColor,
+      linkUrl,
+      isActive,
+      showText,
+    } = req.body;
+
     // Check limit of 5 active manual banners
     if (isActive === "true" || isActive === true) {
-      const activeCount = await prisma.banner.count({ where: { isActive: true } });
+      const activeCount = await prisma.banner.count({
+        where: { isActive: true },
+      });
       if (activeCount >= 5) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Maksimal 5 banner aktif diperbolehkan. Matikan banner lain terlebih dahulu." 
+        return res.status(400).json({
+          success: false,
+          message:
+            "Maksimal 5 banner aktif diperbolehkan. Matikan banner lain terlebih dahulu.",
         });
       }
     }
@@ -57,17 +68,27 @@ export const createBanner = async (req: Request, res: Response) => {
 export const updateBanner = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, bgGradient, contentColor, linkUrl, isActive, showText } = req.body;
+    const {
+      title,
+      subtitle,
+      bgGradient,
+      contentColor,
+      linkUrl,
+      isActive,
+      showText,
+    } = req.body;
 
     // If trying to activate, check limit
     if (isActive === "true" || isActive === true) {
       const currentBanner = await prisma.banner.findUnique({ where: { id } });
       if (currentBanner && !currentBanner.isActive) {
-        const activeCount = await prisma.banner.count({ where: { isActive: true } });
+        const activeCount = await prisma.banner.count({
+          where: { isActive: true },
+        });
         if (activeCount >= 5) {
-          return res.status(400).json({ 
-            success: false, 
-            message: "Maksimal 5 banner aktif diperbolehkan." 
+          return res.status(400).json({
+            success: false,
+            message: "Maksimal 5 banner aktif diperbolehkan.",
           });
         }
       }
@@ -87,8 +108,14 @@ export const updateBanner = async (req: Request, res: Response) => {
         bgGradient,
         contentColor,
         linkUrl,
-        showText: showText !== undefined ? (showText === "true" || showText === true) : undefined,
-        isActive: isActive !== undefined ? (isActive === "true" || isActive === true) : undefined,
+        showText:
+          showText !== undefined
+            ? showText === "true" || showText === true
+            : undefined,
+        isActive:
+          isActive !== undefined
+            ? isActive === "true" || isActive === true
+            : undefined,
       },
     });
 
@@ -102,7 +129,9 @@ export const deleteBanner = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.banner.delete({ where: { id } });
-    return res.status(200).json({ success: true, message: "Banner berhasil dihapus" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Banner berhasil dihapus" });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }

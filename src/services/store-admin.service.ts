@@ -1,7 +1,11 @@
 import prisma from "../config/database";
 import { AppError } from "../middlewares/error.middleware";
 import { hashPassword } from "../utils/password.util";
+import { formatPaginationMeta } from "../utils/pagination.util";
 
+/**
+ * Membuat akun Store Admin baru oleh Super Admin.
+ */
 export const createStoreAdmin = async (data: any) => {
   const { name, email, password, managedStoreId } = data;
 
@@ -43,6 +47,9 @@ export const createStoreAdmin = async (data: any) => {
   });
 };
 
+/**
+ * Mendapatkan daftar semua Store Admin dengan pagination.
+ */
 export const getStoreAdmins = async (query: any) => {
   const { page = 1, limit = 10 } = query;
   const skip = (Number(page) - 1) * Number(limit);
@@ -60,14 +67,13 @@ export const getStoreAdmins = async (query: any) => {
 
   return {
     admins,
-    pagination: {
-      page: Number(page),
-      totalPage: Math.ceil(totalRows / Number(limit)),
-      totalRows,
-    },
+    pagination: formatPaginationMeta(totalRows, Number(page), Number(limit)),
   };
 };
 
+/**
+ * Memperbarui data akun Store Admin.
+ */
 export const updateStoreAdmin = async (id: string, data: any) => {
   const { name, email, managedStoreId, isVerified } = data;
 
@@ -110,6 +116,9 @@ export const updateStoreAdmin = async (id: string, data: any) => {
   });
 };
 
+/**
+ * Menghapus akun Store Admin.
+ */
 export const deleteStoreAdmin = async (id: string) => {
   const admin = await prisma.user.findUnique({ where: { id } });
   if (!admin || admin.role !== "STORE_ADMIN") {

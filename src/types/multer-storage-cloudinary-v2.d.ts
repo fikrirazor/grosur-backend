@@ -1,1 +1,1 @@
-declare module 'multer-storage-cloudinary-v2';
+declare module "multer-storage-cloudinary-v2";

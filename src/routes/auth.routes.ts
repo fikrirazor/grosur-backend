@@ -1,14 +1,14 @@
 // src/routes/auth.routes.ts
 import { Router } from "express";
 import {
-    signIn,
-    signUp,
-    verifyHandler,
-    forgotPasswordHandler,
-    resetPasswordHandler,
-    googleLogin,
-    logout,
-    getMe
+  signIn,
+  signUp,
+  verifyHandler,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+  googleLogin,
+  logout,
+  getMe,
 } from "../controllers/auth.controller";
 import { validateRequest } from "../middlewares/validation.middleware";
 import { signUpSchema, signInSchema } from "../validations/auth.validation";

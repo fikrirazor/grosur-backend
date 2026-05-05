@@ -9,19 +9,22 @@ import {
 
 const router = Router();
 
-// Public route - anyone can view categories
+// Menampilkan semua kategori (Publik)
+// GET /api/categories
 router.get("/", categoryController.getCategories);
 
-// Protected routes - hanya SUPER_ADMIN boleh menambah kategori (Store Admin is Read-Only)
+// Menambah kategori baru (Hanya Super Admin)
+// POST /api/categories
 router.post(
   "/",
-  verifyToken, 
-  authorizeRoles("SUPER_ADMIN"), 
-  validateRequest(createCategorySchema), 
+  verifyToken,
+  authorizeRoles("SUPER_ADMIN"),
+  validateRequest(createCategorySchema),
   categoryController.createCategory,
 );
 
-// Protected routes - hanya SUPER_ADMIN boleh mengedit kategori 
+// Mengubah data kategori (Hanya Super Admin)
+// PUT /api/categories/:categoryId
 router.put(
   "/:categoryId",
   verifyToken,
@@ -30,7 +33,8 @@ router.put(
   categoryController.updateCategory,
 );
 
-// Protected routes - hanya SUPER_ADMIN boleh menghapus kategori 
+// Menghapus kategori (Hanya Super Admin)
+// DELETE /api/categories/:categoryId
 router.delete(
   "/:categoryId",
   verifyToken,
