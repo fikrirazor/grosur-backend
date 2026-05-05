@@ -9,6 +9,27 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 
 const app: Application = express();
 
+// CORS configuration
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://grosur.vercel.app",
+      ];
+      if (process.env.CORS_ORIGIN) {
+        allowedOrigins.push(...process.env.CORS_ORIGIN.split(","));
+      }
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
+
 // HTTP request logger
 app.use(
   pinoHttp({
@@ -31,26 +52,6 @@ app.use(
 );
 
 
-// CORS configuration
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        "https://grosur.vercel.app",
-      ];
-      if (process.env.CORS_ORIGIN) {
-        allowedOrigins.push(...process.env.CORS_ORIGIN.split(","));
-      }
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  }),
-);
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cookieParser());
