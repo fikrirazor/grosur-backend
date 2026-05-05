@@ -224,13 +224,32 @@ export const getProductDetail = async (
   storeId?: string,
 ) => {
   const targetStoreId = await resolveTargetStoreId(storeId, userLat, userLong);
-  const product = await findProductOrThrow(productId, targetStoreId);
-  const stock = product.stocks[0];
+  const now = new Date();
 
-  return {
-    ...product,
-    stocks: undefined,
-    stock: stock?.quantity || 0,
-    storeId: targetStoreId,
-  };
+  const isUUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      productId,
+    );
+
+  const stock = await prisma.stock.findFirst({
+    where: {
+      storeId: targetStoreId,
+      product: {
+        ...(isUUID ? { id: productId } : { slug: productId }),
+        isActive: true,
+      },
+    },
+    include: getPublicProductInclude(now),
+  });
+
+  if (!stock) {
+    throw new AppError(
+      404,
+      "Product not found in this store",
+      true,
+      "PRODUCT_NOT_FOUND",
+    );
+  }
+
+  return mapToProductDetailItem(stock);
 };

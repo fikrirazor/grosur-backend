@@ -48,9 +48,9 @@ export const formatDiscount = (discount: any): DiscountInfo | null => {
   if (!discount) return null;
   return {
     type: discount.type,
-    value: discount.value,
-    minSpend: discount.minSpend,
-    maxDiscount: discount.maxDiscount,
+    value: Number(discount.value),
+    minSpend: discount.minSpend ? Number(discount.minSpend) : null,
+    maxDiscount: discount.maxDiscount ? Number(discount.maxDiscount) : null,
     buyQty: discount.buyQty,
     freeQty: discount.freeQty,
   };
@@ -64,7 +64,7 @@ export const mapToProductListItem = (stock: any): ProductListItem => {
     id: stock.product.id,
     name: stock.product.name,
     slug: stock.product.slug,
-    price: stock.product.price,
+    price: Number(stock.product.price),
     description: stock.product.description,
     category: stock.product.category.name,
     categoryId: stock.product.categoryId,
@@ -86,7 +86,7 @@ export const mapToProductDetailItem = (stock: any): ProductDetailItem => {
     name: stock.product.name,
     slug: stock.product.slug,
     description: stock.product.description,
-    price: stock.product.price,
+    price: Number(stock.product.price),
     category: stock.product.category.name,
     categoryId: stock.product.categoryId,
     images: stock.product.images.map((img: any) => ({
