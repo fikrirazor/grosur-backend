@@ -30,9 +30,6 @@ app.use(
   }),
 );
 
-// Security middleware
-app.use(helmet());
-app.use(cookieParser());
 
 // CORS configuration
 app.use(
@@ -54,6 +51,9 @@ app.use(
     credentials: true,
   }),
 );
+// Security middleware
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cookieParser());
 
 // Body parser middleware
 app.use(express.json());
