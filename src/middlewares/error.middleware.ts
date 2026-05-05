@@ -57,8 +57,9 @@ const handleZodError = (err: ZodError, res: Response) => {
 
 const handlePrismaError = (err: any, res: Response) => {
   const codes: Record<string, { status: number; msg: string }> = {
-    P2002: { status: 409, msg: "Record already exists." },
-    P2025: { status: 404, msg: "Record not found." },
+    P2002: { status: 409, msg: "Data sudah ada (duplikat)." },
+    P2003: { status: 400, msg: "Gagal menghapus data karena masih terhubung dengan data lain (misal: stok, pesanan)." },
+    P2025: { status: 404, msg: "Data tidak ditemukan." },
   };
   const { status = 500, msg = "Database error" } = codes[err.code] || {};
   res.status(status).json({ success: false, message: msg });

@@ -32,7 +32,11 @@ export const getStoreAdmins = async (
     const { admins, pagination } = await storeAdminService.getStoreAdmins(
       req.query,
     );
-    sendResponse(res, 200, true, "Store Admins retrieved", admins, pagination);
+    sendResponse(res, 200, true, "Store Admins retrieved", admins, {
+      page: pagination.page,
+      totalPage: pagination.totalPage,
+      totalRows: pagination.total,
+    });
   } catch (error) {
     next(error);
   }

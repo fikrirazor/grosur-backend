@@ -9,7 +9,7 @@ import { generateSlug } from "../utils/slug.util";
 /**
  * Mendapatkan daftar kategori dengan pencarian dan pagination (Admin).
  */
-export const getCategories = async (query: any) => {
+export const getCategories = async () => {
   return await prisma.category.findMany({
     orderBy: {
       name: "asc",
@@ -20,7 +20,7 @@ export const getCategories = async (query: any) => {
 /**
  * Membuat kategori produk baru (Admin).
  */
-export const createCategory = async (data: { name: string }) => {
+export const createCategory = async (data: CreateCategoryInput) => {
   const { name } = data;
 
   // Check kalau ada kategori duplikat
