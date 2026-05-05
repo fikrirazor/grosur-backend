@@ -1,5 +1,6 @@
-import { Prisma } from "../generated/prisma";
+import { Prisma, Role } from "../generated/prisma";
 import prisma from "../config/database";
+import * as bcrypt from "bcrypt";
 
 export const getAllUsers = async (query: any) => {
   const {
@@ -70,4 +71,78 @@ export const getAllUsers = async (query: any) => {
       totalRows,
     },
   };
+};
+
+export const createUser = async (data: any) => {
+  const { email, password, name, role } = data;
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (existingUser) {
+    throw new Error("User with this email already exists");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  return await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+      role: role as Role,
+      isVerified: true, // Admin-created users are verified by default
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+};
+
+export const updateUser = async (id: string, data: any) => {
+  const { email, password, name, role } = data;
+
+  const updateData: any = {
+    email,
+    name,
+    role: role as Role,
+  };
+
+  if (password) {
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+
+  return await prisma.user.update({
+    where: { id },
+    data: updateData,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+};
+
+export const deleteUser = async (id: string) => {
+  // Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Prevent deleting self (can be added if we have actorId)
+  
+  return await prisma.user.delete({
+    where: { id },
+  });
 };
